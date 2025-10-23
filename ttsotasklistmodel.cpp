@@ -7,7 +7,8 @@ TTSOTaskListModel::TTSOTaskListModel(QObject *parent)
       m_activeRep(-1),
       m_activeTaskOrder(-1),
       m_participantFilter(-1),
-      m_repFilter(-1)
+      m_repFilter(-1),
+      m_isPaused(false)
 {}
 
 int TTSOTaskListModel::rowCount(const QModelIndex &parent) const {
@@ -65,7 +66,8 @@ void TTSOTaskListModel::setActiveTask(int participantID, int repNumber, int task
             task->repNumber() == repNumber &&
             task->taskOrder() == taskOrder) {
             m_currentActiveTask = task;
-            emit activeTaskChanged(task);   // 🔴 let listeners know
+            emit activeTaskChanged(task);
+            emit hasActiveTaskChanged();
             break;
         }
     }
@@ -73,6 +75,46 @@ void TTSOTaskListModel::setActiveTask(int participantID, int repNumber, int task
     if (!m_filteredTasks.isEmpty()) {
         emit dataChanged(index(0,0), index(m_filteredTasks.size()-1,0), {IsActiveRole});
     }
+}
+
+void TTSOTaskListModel::setActiveTaskByIndex(int filteredIndex) {
+    if (filteredIndex < 0 || filteredIndex >= m_filteredTasks.size()) {
+        qWarning() << "Invalid filtered index:" << filteredIndex;
+        return;
+    }
+
+    TTSOTask *task = m_filteredTasks.at(filteredIndex);
+    m_currentActiveTask = task;
+    m_activeParticipant = task->participantID();
+    m_activeRep = task->repNumber();
+    m_activeTaskOrder = task->taskOrder();
+
+    emit activeTaskChanged(task);
+    emit hasActiveTaskChanged();
+
+    if (!m_filteredTasks.isEmpty()) {
+        emit dataChanged(index(0,0), index(m_filteredTasks.size()-1,0), {IsActiveRole});
+    }
+}
+
+void TTSOTaskListModel::setActiveTaskByAbsNum(int absNum) {
+    for (TTSOTask *task : m_filteredTasks) {
+        if (task->absoluteTaskNum() == absNum) {
+            m_currentActiveTask = task;
+            m_activeParticipant = task->participantID();
+            m_activeRep = task->repNumber();
+            m_activeTaskOrder = task->taskOrder();
+
+            emit activeTaskChanged(task);
+            emit hasActiveTaskChanged();
+
+            if (!m_filteredTasks.isEmpty()) {
+                emit dataChanged(index(0,0), index(m_filteredTasks.size()-1,0), {IsActiveRole});
+            }
+            return;
+        }
+    }
+    qWarning() << "Task with absolute number" << absNum << "not found in filtered list";
 }
 
 void TTSOTaskListModel::setParticipantFilter(int participant) {
@@ -108,6 +150,22 @@ void TTSOTaskListModel::applyFilter() {
 TTSOTask* TTSOTaskListModel::currentActiveTask() const {
     return m_currentActiveTask;
 }
+
+bool TTSOTaskListModel::hasActiveTask() const {
+    return m_currentActiveTask != nullptr;
+}
+
+bool TTSOTaskListModel::isPaused() const {
+    return m_isPaused;
+}
+
+void TTSOTaskListModel::setPaused(bool paused) {
+    if (m_isPaused != paused) {
+        m_isPaused = paused;
+        emit pauseStateChanged(paused);
+    }
+}
+
 void TTSOTaskListModel::clearActiveTask()
 {
     if (m_currentActiveTask) {
@@ -116,6 +174,7 @@ void TTSOTaskListModel::clearActiveTask()
         m_activeRep = -1;
         m_activeTaskOrder = -1;
         emit dataChanged(index(0,0), index(m_filteredTasks.size()-1,0), {IsActiveRole});
-        emit activeTaskChanged(nullptr);   // ✅ tell eyeDataInput "no task"
+        emit activeTaskChanged(nullptr);
+        emit hasActiveTaskChanged();
     }
 }

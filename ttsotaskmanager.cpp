@@ -12,22 +12,23 @@ void TTSOTaskManager::loadHardcodedTasks()
         QString name;
         double complexity;
         QString controlType;
+        int absoluteNum;
     };
 
     QHash<QString, TaskMeta> meta;
 
-    meta["T11"] = { "Navigation", 21.0, "Centre Screen" };
-    meta["T1"]  = { "External Temp", 14.33, "Cluster" };
-    meta["T5"]  = { "Temp adjust", 17.83, "Centre Screen" };
-    meta["T18"] = { "Split Airflow", 27.67, "Centre Screen" };
-    meta["T14"] = { "wash/wipe", 12.0, "Stalks" };
-    meta["T12"] = { "flick wipe", 12.0, "Stalks" };
-    meta["T9"]  = { "pause media", 11.0, "Centre Screen" };
-    meta["T23"] = { "Fuel check", 10.0, "Centre Screen" };
-    meta["T21"] = { "Radio selection", 18.0, "Centre Screen" };
-    meta["T16"] = { "give indicator", 15.0, "Stalks" };
-    meta["T22"] = { "Driver mode", 18.0, "Centre Screen" };
-    meta["T19"] = { "Country Road", 12.0, "Centre Console" };
+    meta["T11"] = { "Navigation", 21.0, "Centre Screen", 11 };
+    meta["T1"]  = { "External Temp", 14.33, "Cluster", 1 };
+    meta["T5"]  = { "Temp adjust", 17.83, "Centre Screen", 5 };
+    meta["T18"] = { "Split Airflow", 27.67, "Centre Screen", 18 };
+    meta["T14"] = { "wash/wipe", 12.0, "Stalks" , 14};
+    meta["T12"] = { "flick wipe", 12.0, "Stalks", 12 };
+    meta["T9"]  = { "pause media", 11.0, "Centre Screen", 9 };
+    meta["T23"] = { "Fuel check", 10.0, "Centre Screen", 23 };
+    meta["T21"] = { "Radio selection", 18.0, "Centre Screen", 21 };
+    meta["T16"] = { "give indicator", 15.0, "Stalks", 16 };
+    meta["T22"] = { "Driver mode", 18.0, "Centre Screen", 22 };
+    meta["T19"] = { "Country Road", 12.0, "Centre Console", 19 };
 
     // Define 10 rep sequences (10 reps × 12 tasks = 120 tasks)
     QList<QStringList> repSequences;
@@ -46,11 +47,11 @@ void TTSOTaskManager::loadHardcodedTasks()
     for (int p = 1; p <= 24; ++p) {
         int taskOrder = 1;
 
-        // Task 1: Baseline Drive
+        // Task 1: Baseline Drive (Absolute #1)
         TTSOTask *baselineTask = new TTSOTask(this);
         baselineTask->setName("Baseline Drive");
         baselineTask->setParticipantID(p);
-        baselineTask->setAbsoluteTaskNum(0);  // 0 for baseline
+        baselineTask->setAbsoluteTaskNum(121);  // Absolute task #1
         baselineTask->setTaskOrder(taskOrder++);
         baselineTask->setRepNumber(0);  // 0 for baseline
         baselineTask->setTaskComplexity("baseline");
@@ -69,7 +70,7 @@ void TTSOTaskManager::loadHardcodedTasks()
 
                 task->setName(meta.contains(taskID) ? meta[taskID].name : "Not defined");
                 task->setParticipantID(p);
-                task->setAbsoluteTaskNum(taskID.mid(1).toInt());
+                task->setAbsoluteTaskNum(meta.contains(taskID) ? meta[taskID].absoluteNum : 0 );  // Sequential 2-121
                 task->setTaskOrder(taskOrder++);
                 task->setRepNumber(rep + 1);  // Rep 1-10
                 task->setTaskComplexity(meta.contains(taskID) ? QString::number(meta[taskID].complexity) : "Not defined");
@@ -82,11 +83,11 @@ void TTSOTaskManager::loadHardcodedTasks()
             }
         }
 
-        // Task 122: Experienced Drive
+        // Task 122: Experienced Drive (Absolute #122)
         TTSOTask *expTask = new TTSOTask(this);
         expTask->setName("Experienced Drive");
         expTask->setParticipantID(p);
-        expTask->setAbsoluteTaskNum(-1);  // -1 for experienced
+        expTask->setAbsoluteTaskNum(122);  // Absolute task #122
         expTask->setTaskOrder(taskOrder);
         expTask->setRepNumber(11);  // 11 for experienced
         expTask->setTaskComplexity("experienced");

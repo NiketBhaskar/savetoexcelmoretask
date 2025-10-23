@@ -18,7 +18,7 @@ Item {
             indicatorSignal = (eventVal === "LeftIndicatorOn") ? "Left" : "Right"
         }
 
-        // ✅ If abs task 16 is active AND indicator turns on → press End
+        // Auto-end task 16 when indicator turns on
         if (eventVal === "LeftIndicatorOn" || eventVal === "RightIndicatorOn") {
             var hasTask = taskModel.hasActiveTask && taskModel.currentActiveTask
             if (hasTask) {
@@ -30,31 +30,20 @@ Item {
         }
     }
 
-    // Audio players for each task type
-    MediaPlayer {
-        id: reminderSound
-        source: "qrc:/audio/audio/TTSOdummy.mp3"
-        audioOutput: AudioOutput { id: reminderOut }
-    }
-
+    // Audio players for baseline and experienced
     MediaPlayer {
         id: baselineSound
-        source: "qrc:/audio/audio/baseline.mp3"  // Add your baseline audio
+        source: "qrc:/audio/audio/baseline.mp3"
         audioOutput: AudioOutput { id: baselineSoundOut }
     }
 
     MediaPlayer {
         id: experiencedSound
-        source: "qrc:/audio/audio/experienced.mp3"  // Add your experienced audio
+        source: "qrc:/audio/audio/experienced.mp3"
         audioOutput: AudioOutput { id: experiencedSoundOut }
     }
 
-    MediaPlayer {
-        id: t11Sound
-        source: "qrc:/audio/audio/T11- Bangor.mp3"  // Use first variant for all
-        audioOutput: AudioOutput { id: t11SoundOut }
-    }
-
+    // Audio players for each unique task type (T1-T23)
     MediaPlayer {
         id: t1Sound
         source: "qrc:/audio/audio/T1.mp3"
@@ -63,26 +52,8 @@ Item {
 
     MediaPlayer {
         id: t5Sound
-        source: "qrc:/audio/audio/T5- 24.mp3"  // Use first variant for all
+        source: "qrc:/audio/audio/T5- 24.mp3"
         audioOutput: AudioOutput { id: t5SoundOut }
-    }
-
-    MediaPlayer {
-        id: t18Sound
-        source: "qrc:/audio/audio/T18-split.mp3"
-        audioOutput: AudioOutput { id: t18SoundOut }
-    }
-
-    MediaPlayer {
-        id: t14Sound
-        source: "qrc:/audio/audio/T14.mp3"
-        audioOutput: AudioOutput { id: t14SoundOut }
-    }
-
-    MediaPlayer {
-        id: t12Sound
-        source: "qrc:/audio/audio/T12.mp3"
-        audioOutput: AudioOutput { id: t12SoundOut }
     }
 
     MediaPlayer {
@@ -92,42 +63,65 @@ Item {
     }
 
     MediaPlayer {
+        id: t11Sound
+        source: "qrc:/audio/audio/T11- Bangor.mp3"
+        audioOutput: AudioOutput { id: t11SoundOut }
+    }
+
+    MediaPlayer {
+        id: t12Sound
+        source: "qrc:/audio/audio/T12.mp3"
+        audioOutput: AudioOutput { id: t12SoundOut }
+    }
+
+    MediaPlayer {
+        id: t14Sound
+        source: "qrc:/audio/audio/T14.mp3"
+        audioOutput: AudioOutput { id: t14SoundOut }
+    }
+
+    MediaPlayer {
+        id: t16Sound
+        source: "qrc:/audio/audio/T16-left.mp3"
+        audioOutput: AudioOutput { id: t16SoundOut }
+    }
+
+    MediaPlayer {
+        id: t18Sound
+        source: "qrc:/audio/audio/T18-split.mp3"
+        audioOutput: AudioOutput { id: t18SoundOut }
+    }
+
+    MediaPlayer {
+        id: t19Sound
+        source: "qrc:/audio/audio/T19-on.mp3"
+        audioOutput: AudioOutput { id: t19SoundOut }
+    }
+
+    MediaPlayer {
+        id: t21Sound
+        source: "qrc:/audio/audio/T21- Virgin Radio UK.mp3"
+        audioOutput: AudioOutput { id: t21SoundOut }
+    }
+
+    MediaPlayer {
+        id: t22Sound
+        source: "qrc:/audio/audio/T22- Comfort.mp3"
+        audioOutput: AudioOutput { id: t22SoundOut }
+    }
+
+    MediaPlayer {
         id: t23Sound
         source: "qrc:/audio/audio/T23.mp3"
         audioOutput: AudioOutput { id: t23SoundOut }
     }
 
-    MediaPlayer {
-        id: t21Sound
-        source: "qrc:/audio/audio/T21- Virgin Radio UK.mp3"  // Use first variant for all
-        audioOutput: AudioOutput { id: t21SoundOut }
-    }
-
-    MediaPlayer {
-        id: t16Sound
-        source: "qrc:/audio/audio/T16-left.mp3"  // Use left variant
-        audioOutput: AudioOutput { id: t16SoundOut }
-    }
-
-    MediaPlayer {
-        id: t22Sound
-        source: "qrc:/audio/audio/T22- Comfort.mp3"  // Use comfort variant
-        audioOutput: AudioOutput { id: t22SoundOut }
-    }
-
-    MediaPlayer {
-        id: t19Sound
-        source: "qrc:/audio/audio/T19-on.mp3"  // Use on variant
-        audioOutput: AudioOutput { id: t19SoundOut }
-    }
-
     Timer {
         id: autoNextTimer
-        interval: 5000      // 5 seconds
+        interval: 5000
         repeat: false
         onTriggered: {
-            console.log("5s passed after End Task")
-            if (!taskModel.hasActiveTask && nextTaskBtn.enabled) {
+            if (!taskModel.hasActiveTask && !taskModel.isPaused && nextTaskBtn.enabled) {
                 nextTaskBtn.clicked()
             }
         }
@@ -136,22 +130,147 @@ Item {
     Column {
         spacing: 4
 
-        // Rep selector showing: Baseline, Rep 1-10, Experienced
+        // Top control row with Baseline, Experienced, and Pause buttons
+        Row {
+            spacing: 10
+            Label { text: "Special Tasks:" }
+
+            Button {
+                id: startBaselineBtn
+                text: "Start Baseline (Abs#1)"
+                enabled: !taskModel.hasActiveTask && !taskModel.isPaused
+                onClicked: {
+                    taskModel.repFilter = 0  // Baseline rep
+                    taskModel.setActiveTaskByIndex(0)
+
+                    if (taskModel.currentActiveTask) {
+                        switch(taskModel.currentActiveTask.absoluteTaskNum){
+                        case 11 :
+                            requestCheckTask(1, true)
+                            break;
+                        case 1 :
+                            requestCheckTask(2, true)
+                            break;
+                        case 5 :
+                            requestCheckTask(3, true)
+                            break;
+                        case 18 :
+                            requestCheckTask(4, true)
+                            break;
+                        case 14 :
+                            requestCheckTask(5, true)
+                            break;
+                        case 12 :
+                            requestCheckTask(6, true)
+                            break;
+                        case 9 :
+                            requestCheckTask(7, true)
+                            break;
+                        case 23 :
+                            requestCheckTask(8, true)
+                            break;
+                        case 21 :
+                            requestCheckTask(9, true)
+                            break;
+                        case 16 :
+                            requestCheckTask(10, true)
+                            break;
+                        case 22 :
+                            requestCheckTask(11, true)
+                            break;
+                        case 19 :
+                            requestCheckTask(12, true)
+                            break;
+                        default:
+                            break;
+                            }
+                        playAudioForCurrentTask()
+                    }
+
+                    expdesignform.triggerSave()
+                }
+            }
+
+            Button {
+                id: startExperiencedBtn
+                text: "Start Experienced (Abs#122)"
+                enabled: !taskModel.hasActiveTask && !taskModel.isPaused
+                onClicked: {
+                    taskModel.repFilter = 11  // Experienced rep
+                    taskModel.setActiveTaskByIndex(0)
+
+                    if (taskModel.currentActiveTask) {
+                        switch(taskModel.currentActiveTask.absoluteTaskNum){
+                        case 11 :
+                            requestCheckTask(1, true)
+                            break;
+                        case 1 :
+                            requestCheckTask(2, true)
+                            break;
+                        case 5 :
+                            requestCheckTask(3, true)
+                            break;
+                        case 18 :
+                            requestCheckTask(4, true)
+                            break;
+                        case 14 :
+                            requestCheckTask(5, true)
+                            break;
+                        case 12 :
+                            requestCheckTask(6, true)
+                            break;
+                        case 9 :
+                            requestCheckTask(7, true)
+                            break;
+                        case 23 :
+                            requestCheckTask(8, true)
+                            break;
+                        case 21 :
+                            requestCheckTask(9, true)
+                            break;
+                        case 16 :
+                            requestCheckTask(10, true)
+                            break;
+                        case 22 :
+                            requestCheckTask(11, true)
+                            break;
+                        case 19 :
+                            requestCheckTask(12, true)
+                            break;
+                        default:
+                            break;
+                            }
+                        playAudioForCurrentTask()
+                    }
+
+                    expdesignform.triggerSave()
+                }
+            }
+
+            Button {
+                id: pauseResumeBtn
+                text: taskModel.isPaused ? "Resume" : "Pause"
+                enabled: !taskModel.hasActiveTask
+                onClicked: {
+                    taskModel.setPaused(!taskModel.isPaused)
+                }
+            }
+        }
+
+        // Rep selector for tasks 2-121 (Reps 1-10)
         Row {
             spacing: 20
-            Label { text: "Section:" }
+            Label { text: "Rep:" }
             ComboBox {
                 id: repSelector
                 width: 150
-                model: ["Baseline", "Rep 1", "Rep 2", "Rep 3", "Rep 4", "Rep 5",
-                        "Rep 6", "Rep 7", "Rep 8", "Rep 9", "Rep 10", "Experienced"]
+                model: ["Rep 1 (order#1-12)", "Rep 2 (order#13-24)", "Rep 3 (order#25-36)",
+                        "Rep 4 (order#37-48)", "Rep 5 (order#49-60)", "Rep 6 (order#61-72)",
+                        "Rep 7 (order#73-84)", "Rep 8 (order#85-96)", "Rep 9 (order#97-110)",
+                        "Rep 10 (order#111-122)"]
                 currentIndex: 0
                 onCurrentIndexChanged: {
-                    // Map UI index to actual rep filter
-                    // 0 = Baseline (rep 0)
-                    // 1-10 = Rep 1-10 (rep 1-10)
-                    // 11 = Experienced (rep 11)
-                    taskModel.repFilter = currentIndex
+                    taskModel.repFilter = currentIndex + 1  // Rep 1-10
                     taskView.currentIndex = 0
                     taskModel.clearActiveTask()
                     startTaskBtn.enabled = true
@@ -160,19 +279,59 @@ Item {
                 }
             }
 
-            // Control buttons
+            // Task control buttons
             Button {
                 id: startTaskBtn
                 text: "Start Task"
-                enabled: true
+                enabled: !taskModel.hasActiveTask && !taskModel.isPaused
                 onClicked: {
                     taskView.currentIndex = 0
-                    taskModel.setActiveTaskByIndex(0)  // Set first task in filtered list
+                    taskModel.setActiveTaskByIndex(0)
 
-                    // Check task in TTSO (use absolute task order)
                     if (taskModel.currentActiveTask) {
-                        requestCheckTask(taskModel.currentActiveTask.taskOrder, true)
-                        playAudioForCurrentTask()  // Play after task is set
+
+                       // requestCheckTask(taskModel.currentActiveTask, true)
+                        switch(taskModel.currentActiveTask.absoluteTaskNum){
+                        case 11 :
+                            requestCheckTask(1, true)
+                            break;
+                        case 1 :
+                            requestCheckTask(2, true)
+                            break;
+                        case 5 :
+                            requestCheckTask(3, true)
+                            break;
+                        case 18 :
+                            requestCheckTask(4, true)
+                            break;
+                        case 14 :
+                            requestCheckTask(5, true)
+                            break;
+                        case 12 :
+                            requestCheckTask(6, true)
+                            break;
+                        case 9 :
+                            requestCheckTask(7, true)
+                            break;
+                        case 23 :
+                            requestCheckTask(8, true)
+                            break;
+                        case 21 :
+                            requestCheckTask(9, true)
+                            break;
+                        case 16 :
+                            requestCheckTask(10, true)
+                            break;
+                        case 22 :
+                            requestCheckTask(11, true)
+                            break;
+                        case 19 :
+                            requestCheckTask(12, true)
+                            break;
+                        default:
+                            break;
+                            }
+                        playAudioForCurrentTask()
                     }
 
                     startTaskBtn.enabled = false
@@ -188,36 +347,114 @@ Item {
                 enabled: false
                 onClicked: {
                     var next = taskView.currentIndex + 1
-                    var currentRep = repSelector.currentIndex
+                    var currentRep = repSelector.currentIndex + 1
 
                     if (next < taskView.count) {
+                        // Continue in current rep
                         taskView.currentIndex = next
-                        taskModel.setActiveTaskByIndex(next)  // Use filtered index
+                        taskModel.setActiveTaskByIndex(next)
 
-                        // Check next task in TTSO and play audio
                         if (taskModel.currentActiveTask) {
-                            requestCheckTask(taskModel.currentActiveTask.taskOrder, true)
-                            playAudioForCurrentTask()  // Play after task is set
+                            switch(taskModel.currentActiveTask.absoluteTaskNum){
+                            case 11 :
+                                requestCheckTask(1, true)
+                                break;
+                            case 1 :
+                                requestCheckTask(2, true)
+                                break;
+                            case 5 :
+                                requestCheckTask(3, true)
+                                break;
+                            case 18 :
+                                requestCheckTask(4, true)
+                                break;
+                            case 14 :
+                                requestCheckTask(5, true)
+                                break;
+                            case 12 :
+                                requestCheckTask(6, true)
+                                break;
+                            case 9 :
+                                requestCheckTask(7, true)
+                                break;
+                            case 23 :
+                                requestCheckTask(8, true)
+                                break;
+                            case 21 :
+                                requestCheckTask(9, true)
+                                break;
+                            case 16 :
+                                requestCheckTask(10, true)
+                                break;
+                            case 22 :
+                                requestCheckTask(11, true)
+                                break;
+                            case 19 :
+                                requestCheckTask(12, true)
+                                break;
+                            default:
+                                break;
+                                }
+                            playAudioForCurrentTask()
                         }
 
                         nextTaskBtn.enabled = false
                         endTaskBtn.enabled = true
                     } else {
-                        // Move to next section
-                        if (currentRep < 11) {  // 11 is Experienced
-                            repSelector.currentIndex = currentRep + 1
+                        // Move to next rep
+                        if (currentRep < 10) {
+                            repSelector.currentIndex = currentRep
                             taskView.currentIndex = 0
-                            taskModel.setActiveTaskByIndex(0)  // First task in new section
+                            taskModel.setActiveTaskByIndex(0)
 
                             if (taskModel.currentActiveTask) {
-                                requestCheckTask(taskModel.currentActiveTask.taskOrder, true)
-                                playAudioForCurrentTask()  // Play after task is set
+                                switch(taskModel.currentActiveTask.absoluteTaskNum){
+                                case 11 :
+                                    requestCheckTask(1, true)
+                                    break;
+                                case 1 :
+                                    requestCheckTask(2, true)
+                                    break;
+                                case 5 :
+                                    requestCheckTask(3, true)
+                                    break;
+                                case 18 :
+                                    requestCheckTask(4, true)
+                                    break;
+                                case 14 :
+                                    requestCheckTask(5, true)
+                                    break;
+                                case 12 :
+                                    requestCheckTask(6, true)
+                                    break;
+                                case 9 :
+                                    requestCheckTask(7, true)
+                                    break;
+                                case 23 :
+                                    requestCheckTask(8, true)
+                                    break;
+                                case 21 :
+                                    requestCheckTask(9, true)
+                                    break;
+                                case 16 :
+                                    requestCheckTask(10, true)
+                                    break;
+                                case 22 :
+                                    requestCheckTask(11, true)
+                                    break;
+                                case 19 :
+                                    requestCheckTask(12, true)
+                                    break;
+                                default:
+                                    break;
+                                    }
+                                playAudioForCurrentTask()
                             }
 
                             nextTaskBtn.enabled = false
                             endTaskBtn.enabled = true
                         } else {
-                            console.log("All 122 tasks complete for participant " + filename.selectedParticipant)
+                            console.log("All 120 rep tasks complete for participant " + filename.selectedParticipant)
                         }
                     }
                     expdesignform.triggerSave()
@@ -231,17 +468,58 @@ Item {
                 onClicked: {
                     expdesignform.triggerEnd()
 
-                    // Uncheck current task using absolute task order
                     if (taskModel.currentActiveTask) {
-                        requestCheckTask(taskModel.currentActiveTask.taskOrder, false)
+                        switch(taskModel.currentActiveTask.absoluteTaskNum){
+                        case 11 :
+                            requestCheckTask(1, false)
+                            break;
+                        case 1 :
+                            requestCheckTask(2, false)
+                            break;
+                        case 5 :
+                            requestCheckTask(3, false)
+                            break;
+                        case 18 :
+                            requestCheckTask(4, false)
+                            break;
+                        case 14 :
+                            requestCheckTask(5, false)
+                            break;
+                        case 12 :
+                            requestCheckTask(6, false)
+                            break;
+                        case 9 :
+                            requestCheckTask(7, false)
+                            break;
+                        case 23 :
+                            requestCheckTask(8, false)
+                            break;
+                        case 21 :
+                            requestCheckTask(9, false)
+                            break;
+                        case 16 :
+                            requestCheckTask(10, false)
+                            break;
+                        case 22 :
+                            requestCheckTask(11, false)
+                            break;
+                        case 19 :
+                            requestCheckTask(12, false)
+                            break;
+                        default:
+                            break;
+                            }
                     }
 
                     taskModel.clearActiveTask()
 
                     startTaskBtn.enabled = false
-                    nextTaskBtn.enabled = true
+                    nextTaskBtn.enabled = !taskModel.isPaused
                     endTaskBtn.enabled = false
-                    autoNextTimer.restart()
+
+                    if (!taskModel.isPaused) {
+                        autoNextTimer.restart()
+                    }
                 }
             }
         }
@@ -251,7 +529,7 @@ Item {
             spacing: 40
             width: parent.width
             Rectangle { width: 60; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Task Order" } }
-            Rectangle { width: 30; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "AbsT" } }
+            Rectangle { width: 40; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Abs#" } }
             Rectangle { width: 120; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Name" } }
             Rectangle { width: 40; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Comp" } }
             Rectangle { width: 90; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Control" } }
@@ -276,7 +554,7 @@ Item {
                     Text { anchors.centerIn: parent; text: model.taskOrder }
                 }
                 Rectangle {
-                    width: 30; height: 20
+                    width: 40; height: 20
                     color: model.isActive ? "lightgreen" : "transparent"
                     border.width: 1
                     Text { anchors.centerIn: parent; text: model.absoluteTaskNum }
@@ -309,32 +587,41 @@ Item {
 
         var absNum = taskModel.currentActiveTask.absoluteTaskNum
 
-        // Play audio based on absolute task number
-        switch(absNum) {
-        case 0:  baselineSound.play(); break;
-        case -1: experiencedSound.play(); break;
-        case 1:  t1Sound.play(); break;
-        case 5:  t5Sound.play(); break;
-        case 9:  t9Sound.play(); break;
-        case 11: t11Sound.play(); break;
-        case 12: t12Sound.play(); break;
-        case 14: t14Sound.play(); break;
-        case 16: t16Sound.play(); break;
-        case 18: t18Sound.play(); break;
-        case 19: t19Sound.play(); break;
-        case 21: t21Sound.play(); break;
-        case 22: t22Sound.play(); break;
-        case 23: t23Sound.play(); break;
-        default:
-            console.log("No audio for task " + absNum)
-            break;
+        // Baseline (Abs#1)
+        if (absNum === 121) {
+            baselineSound.play()
+            return
         }
+
+        // Experienced (Abs#122)
+        if (absNum === 122) {
+            experiencedSound.play()
+            return
+        }
+
+        // For tasks 2-121, map to the underlying task type
+        // We need to get the task name to determine which audio to play
+        var taskName = taskModel.currentActiveTask.name
+
+        if (taskName === "Navigation") t11Sound.play()
+        else if (taskName === "External Temp") t1Sound.play()
+        else if (taskName === "Temp adjust") t5Sound.play()
+        else if (taskName === "Split Airflow") t18Sound.play()
+        else if (taskName === "wash/wipe") t14Sound.play()
+        else if (taskName === "flick wipe") t12Sound.play()
+        else if (taskName === "pause media") t9Sound.play()
+        else if (taskName === "Fuel check") t23Sound.play()
+        else if (taskName === "Radio selection") t21Sound.play()
+        else if (taskName === "give indicator") t16Sound.play()
+        else if (taskName === "Driver mode") t22Sound.play()
+        else if (taskName === "Country Road") t19Sound.play()
+        else console.log("No audio mapping for task: " + taskName)
     }
 
-    // Keep filters synced
+    // Initialize filters
     Component.onCompleted: {
         taskModel.participantFilter = filename.selectedParticipant
-        taskModel.repFilter = 0  // Start with Baseline
+        taskModel.repFilter = 1  // Start with Rep 1
         taskModel.clearActiveTask()
     }
 
@@ -343,7 +630,7 @@ Item {
         onSelectedParticipantChanged: {
             taskModel.participantFilter = filename.selectedParticipant
             repSelector.currentIndex = 0
-            taskModel.repFilter = 0
+            taskModel.repFilter = 1
             taskView.currentIndex = 0
             taskModel.clearActiveTask()
             startTaskBtn.enabled = true
