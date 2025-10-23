@@ -1,0 +1,63 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>FilenameWidget.qml</file>
+        <file>LoggingConsole.qml</file>
+        <file>MeasureSelector.qml</file>
+        <file>SimulatorData.qml</file>
+        <file>TaskData.qml</file>
+        <file>ExpDesignForm.qml</file>
+        <file>UserInterfacePanel.qml</file>
+        <file>TestScript.qml</file>
+        <file>EyeTrackerData.qml</file>
+        <file>HRBRData.qml</file>
+        <file>ADAS.qml</file>
+        <file>LED.qml</file>
+        <file>EyeTrackerData_v1.qml</file>
+        <file>AttenDgraph.qml</file>
+        <file>audio_hnc.qml</file>
+        <file>TTSO.qml</file>
+    </qresource>
+    <qresource prefix="/audio">
+        <file>audio/baseline.mp3</file>
+        <file>audio/T1.mp3</file>
+        <file>audio/T5- 16.mp3</file>
+        <file>audio/T5- 20.mp3</file>
+        <file>audio/T5- 24.mp3</file>
+        <file>audio/T5- 28.mp3</file>
+        <file>audio/T9.mp3</file>
+        <file>audio/T11- Bangor.mp3</file>
+        <file>audio/T11- Bolton.mp3</file>
+        <file>audio/T11- Boston.mp3</file>
+        <file>audio/T11- Durham.mp3</file>
+        <file>audio/T11- Exeter.mp3</file>
+        <file>audio/T11- Hexham.mp3</file>
+        <file>audio/T11- Kendal.mp3</file>
+        <file>audio/T11- Marlow.mp3</file>
+        <file>audio/T11- Oldham.mp3</file>
+        <file>audio/T11- Oxford.mp3</file>
+        <file>audio/T11- Whitby.mp3</file>
+        <file>audio/T11- Woking.mp3</file>
+        <file>audio/T11- Yeovil.mp3</file>
+        <file>audio/T11-Gaydon.mp3</file>
+        <file>audio/T12.mp3</file>
+        <file>audio/T14.mp3</file>
+        <file>audio/T16-left.mp3</file>
+        <file>audio/T16-right.mp3</file>
+        <file>audio/T18-merge.mp3</file>
+        <file>audio/T18-split.mp3</file>
+        <file>audio/T19-off.mp3</file>
+        <file>audio/T19-on.mp3</file>
+        <file>audio/T21- Classic FM.mp3</file>
+        <file>audio/T21- LBC.mp3</file>
+        <file>audio/T21- Radio X.mp3</file>
+        <file>audio/T21- Talksports.mp3</file>
+        <file>audio/T21- Times Radio.mp3</file>
+        <file>audio/T21- Virgin Radio UK.mp3</file>
+        <file>audio/T21-Sydney.mp3</file>
+        <file>audio/T22- Comfort.mp3</file>
+        <file>audio/T22- Dynamic.mp3</file>
+        <file>audio/T23.mp3</file>
+        <file>audio/experienced.mp3</file>
+    </qresource>
+</RCC>
