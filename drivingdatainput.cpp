@@ -64,13 +64,13 @@ static inline QString buildSimpleTaskName(TTSOTask *task) {
     int rep = task->repNumber();
     int pID = task->participantID();
 
-    // Baseline drive (absNum = 0, rep = 0)
-    if (absNum == 0 && rep == 0) {
+    // ✅ FIX: Baseline drive (absNum = 121, rep = 0) - WAS CHECKING absNum == 0
+    if (absNum == -1 && rep == -1) {
         return QString("P%1_Baseline").arg(pID);
     }
 
-    // Experienced drive (absNum = -1, rep = 11)
-    if (absNum == -1 && rep == 11) {
+    // ✅ FIX: Experienced drive (absNum = 122, rep = 11) - WAS CHECKING absNum == -1
+    if (absNum == -2 && rep == -2) {
         return QString("P%1_Experienced").arg(pID);
     }
 
@@ -80,6 +80,10 @@ static inline QString buildSimpleTaskName(TTSOTask *task) {
             .arg(absNum)
             .arg(rep);
 }
+
+
+
+
 static inline QString sanitize(const QString &s) {
     QString out = s.trimmed();
     out.replace(QRegularExpression("[\\s]+"), "_");

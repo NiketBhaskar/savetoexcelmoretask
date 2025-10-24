@@ -51,9 +51,9 @@ void TTSOTaskManager::loadHardcodedTasks()
         TTSOTask *baselineTask = new TTSOTask(this);
         baselineTask->setName("Baseline Drive");
         baselineTask->setParticipantID(p);
-        baselineTask->setAbsoluteTaskNum(121);  // Absolute task #1
+        baselineTask->setAbsoluteTaskNum(-1);
         baselineTask->setTaskOrder(taskOrder++);
-        baselineTask->setRepNumber(0);  // 0 for baseline
+        baselineTask->setRepNumber(-1);
         baselineTask->setTaskComplexity("baseline");
         baselineTask->setControlTypes("baseline");
         baselineTask->setActualTouchCount(-1);
@@ -87,9 +87,9 @@ void TTSOTaskManager::loadHardcodedTasks()
         TTSOTask *expTask = new TTSOTask(this);
         expTask->setName("Experienced Drive");
         expTask->setParticipantID(p);
-        expTask->setAbsoluteTaskNum(122);  // Absolute task #122
+        expTask->setAbsoluteTaskNum(-2);
         expTask->setTaskOrder(taskOrder);
-        expTask->setRepNumber(11);  // 11 for experienced
+        expTask->setRepNumber(-2);
         expTask->setTaskComplexity("experienced");
         expTask->setControlTypes("experienced");
         expTask->setActualTouchCount(-1);

@@ -45,13 +45,13 @@ static inline QString buildSimpleTaskName(TTSOTask *task) {
     int rep = task->repNumber();
     int pID = task->participantID();
 
-    // Baseline drive (absNum = 0, rep = 0)
-    if (absNum == 0 && rep == 0) {
+    // ✅ FIX: Baseline drive (absNum = 121, rep = 0) - WAS CHECKING absNum == 0
+    if (absNum == -1 && rep == -1) {
         return QString("P%1_Baseline").arg(pID);
     }
 
-    // Experienced drive (absNum = -1, rep = 11)
-    if (absNum == -1 && rep == 11) {
+    // ✅ FIX: Experienced drive (absNum = 122, rep = 11) - WAS CHECKING absNum == -1
+    if (absNum == -2 && rep == -2) {
         return QString("P%1_Experienced").arg(pID);
     }
 
@@ -335,17 +335,9 @@ void eyeDataInput::writeInterpolatedAHEAD()
 
     QTextStream stream(&file10);
 
+    // ✅ FIX: Use consistent 33.33ms intervals instead of special "every 3rd frame" logic
     while (frameNumberByTask <= maxFrame) {
-        double targetTime;
-
-        // ✅ Every 3rd frame: use rounded tenth
-        if (frameNumberByTask % 3 == 0 && frameNumberByTask > 0) {
-            int tenthIndex = frameNumberByTask / 3;  // 3→1, 6→2, 9→3, 12→4...
-            targetTime = tenthIndex * 0.1;           // 0.1, 0.2, 0.3, 0.4...
-        } else {
-            // Normal frames: use 0.033 intervals
-            targetTime = frameNumberByTask * 0.033;
-        }
+        double targetTime = frameNumberByTask * 0.033;  // Consistent 33.33ms intervals
 
         // Find closest sample to targetTime
         QString closestLabel = glanceSampleBuffer.first().label;
@@ -359,7 +351,7 @@ void eyeDataInput::writeInterpolatedAHEAD()
             }
         }
 
-        // Write the frame
+        // Write the frame with 3 decimal precision for time
         stream << frameNumberByTask << ","
                << QString::number(targetTime, 'f', 3) << ","
                << closestLabel << Qt::endl;
