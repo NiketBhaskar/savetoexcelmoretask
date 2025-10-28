@@ -38,7 +38,7 @@ ApplicationWindow {
     signal sendSTISIMTriggerQML()                                         //DRIVINGDATAINPUT.H
     signal updateLogOnSimDataQML(string logonsimdata)                     //DRIVINGDATAINPUT.H
     signal start_DRA_DataFile(string filenum)                           //DRIVINGDATAINPUT.H
-    signal stop_DRA_DataFile()                                          //DRIVINGDATAINPUT.H
+    signal stop_DRA_DataFile(string taskEndStatus)                                          //DRIVINGDATAINPUT.H
     ////////////////////////////////////////////////////////////////////////
     signal updateLoggingStatusQML(string logging)                         //LOGGINGDATATOFILE.H
     signal updateRunNumberQML(string runnumber)                           //LOGGINGDATATOFILE.H
@@ -146,7 +146,7 @@ ApplicationWindow {
     function setTerminalWindowDrivingQML(timeVal, lanePosVal, strAngleDegVal, crashesVal, speedkmVal, throttleVal, brakeVal, distanceVal, closestCarVal, leftBSVal, rightBSVal, indicatorVal, sdlpVal, sdsVal, unixTime)
     {
        simdata.setTerminalWindowDrivingProperty(timeVal, lanePosVal, strAngleDegVal, crashesVal, speedkmVal, throttleVal, brakeVal, distanceVal, closestCarVal, leftBSVal, rightBSVal, indicatorVal, sdlpVal, sdsVal)
-
+       dataFromTestScript.datafromSim(timeVal)
        userinterfacecontrolpanel.setUnixTime(unixTime)
     }
 
@@ -252,6 +252,7 @@ ApplicationWindow {
         filename.reset_vals()
         logging.reset_vals()
         configuration.reset_vals()
+
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -314,7 +315,7 @@ ApplicationWindow {
     FilenameWidget{
         id:filename
         x: 5
-        y: 5
+        y: 1
         width: 600
         height: 100
         enabled: !logging.logging
@@ -325,7 +326,7 @@ ApplicationWindow {
     LoggingConsole{
         id:logging
         x: 610
-        y: 5
+        y: 1
         visible: (filename.currentfilenameText != "")
     }
 
@@ -344,7 +345,7 @@ ApplicationWindow {
     SimulatorData{
         id:simdata
         x: 317
-        y: 120
+        y: 110
         visible: (filename.currentfilenameText != "" && configuration.logDrivingSim)
     }
 
@@ -353,7 +354,7 @@ ApplicationWindow {
     UserInterfacePanel{
         id:userinterfacecontrolpanel
         x: 5
-        y: 410
+        y: 390
         enabled: !logging.logging
         visible: (filename.currentfilenameText != "")
     }
@@ -362,7 +363,7 @@ ApplicationWindow {
     TaskData{
         id:taskdata
         x: 610
-        y: 120
+        y: 110
         visible: (filename.currentfilenameText != "" && configuration.logTaskEvents)
 
     }
@@ -374,14 +375,14 @@ ApplicationWindow {
     EyeTrackerData_v1{
         id:eyetrackerdata
         x: 610
-        y: 210
+        y: 200
         visible: (filename.currentfilenameText != ""&& configuration.logEyeTracker)
         //visible: true
     }
     AttenDgraph{
             id:meanAttenDgraph
             x:915
-            y: 5
+            y: 1
             width:300
             height:300
             visible: (filename.currentfilenameText != ""&& configuration.logEyeTracker)
@@ -392,92 +393,57 @@ ApplicationWindow {
     ExpDesignForm{
         id:expdesignform
         x: 610
-        y: 450
+        y: 440
         visible: (filename.currentfilenameText != "")
     }
 
-    // Timer display next to the button
-    Text {
-        id: timerDisplay
-        x: demoExpButton.x + demoExpButton.width + 10
-        y: demoExpButton.y + 2
-        font.pixelSize: 18
-        font.bold: true
-        color: elapsedTimer.running ? "#00AA00" : "#666666"
-        text: {
-            var hours = Math.floor(elapsedSeconds / 3600)
-            var minutes = Math.floor((elapsedSeconds % 3600) / 60)
-            var seconds = elapsedSeconds % 60
 
-            if (hours > 0) {
-                return String(hours).padStart(2, '0') + ":" +
-                       String(minutes).padStart(2, '0') + ":" +
-                       String(seconds).padStart(2, '0')
-            } else {
-                return String(minutes).padStart(2, '0') + ":" +
-                       String(seconds).padStart(2, '0')
-            }
-        }
-    }
 
-    // Timer logic
-    Timer {
-        id: elapsedTimer
-        interval: 1000 // 1 second
-        repeat: true
-        running: false
-        onTriggered: {
-            elapsedSeconds++
-        }
-    }
-
-    property int elapsedSeconds: 0
-
-    Button {
-        id: demoExpButton
-        x: 610
-        y: 900
-        width: 255
-        height: 28
-        property int phase: 0
-        text: phase === 0 ? "Start Demo Drive"
-             : phase === 1 ? "End Demo Drive"
-             : phase === 2 ? "Start Exp Drive"
-             :               "End Exp Drive"
-        onClicked: {
-            switch (phase) {
-            case 0: // Start Demo
-                startDemoLoggingQML()
-                elapsedSeconds = 0
-                elapsedTimer.start()
-                phase = 1
-                break
-            case 1: // End Demo
-                stopDemoLoggingQML()
-                elapsedTimer.stop()
-                phase = 2
-                break
-            case 2: // Start Exp
-                startExpLoggingQML()
-                elapsedSeconds = 0
-                elapsedTimer.start()
-                phase = 3
-                break
-            case 3: // End Exp
-                stopExpLoggingQML()
-                elapsedTimer.stop()
-                phase = 0
-                break
-            }
-        }
-    }
+//    Button {
+//        id: demoExpButton
+//        x: 610
+//        y: 890
+//        width: 255
+//        height: 28
+//        property int phase: 0
+//        text: phase === 0 ? "Start Demo Drive"
+//             : phase === 1 ? "End Demo Drive"
+//             : phase === 2 ? "Start Exp Drive"
+//             :               "End Exp Drive"
+//        onClicked: {
+//            switch (phase) {
+//            case 0: // Start Demo
+//                startDemoLoggingQML()
+//                elapsedSeconds = 0
+//                elapsedTimer.start()
+//                phase = 1
+//                break
+//            case 1: // End Demo
+//                stopDemoLoggingQML()
+//                elapsedTimer.stop()
+//                phase = 2
+//                break
+//            case 2: // Start Exp
+//                startExpLoggingQML()
+//                elapsedSeconds = 0
+//                elapsedTimer.start()
+//                phase = 3
+//                break
+//            case 3: // End Exp
+//                stopExpLoggingQML()
+//                elapsedTimer.stop()
+//                phase = 0
+//                break
+//            }
+//        }
+//    }
 
     ////////////////////////////////////////////////////////////////////////
     //WIDGET FOR DISPLAYING TEST SCRIPT/////////////////////////////////////
     TestScript{
         id: dataFromTestScript
         x: 5
-        y: 635
+        y: 620
         enabled: true
         visible: (filename.currentfilenameText != "")
     }
@@ -496,7 +462,7 @@ ApplicationWindow {
     TTSO{
         id: ledControls
         x: 1050
-        y: 330
+        y: 320
         enabled: true
         visible: (filename.currentfilenameText != "")
     }
@@ -508,7 +474,7 @@ ApplicationWindow {
 
         //SIM
         x: 920
-        y: 315
+        y: 305
        // y: 330
 
         //HOME

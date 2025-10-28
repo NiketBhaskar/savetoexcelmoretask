@@ -142,7 +142,7 @@ void drivingDataInput::onTextMessageReceived(QString message) {
         int absTaskNum = obj["absTaskNum"].toInt();
         int repNum = obj["repNum"].toInt();
         qDebug() << "Android signaled task end:" << absTaskNum << repNum;
-        stopWriteDRABuffFile();   // directly trigger stop here
+        stopWriteDRABuffFile("Non TTSO");   // directly trigger stop here
     }
 }
 void drivingDataInput::updateDrivingDataOnOff (QString draOnOff)
@@ -354,7 +354,7 @@ void drivingDataInput::startWriteDRABuffFile(QString fileNum)
 }
 
 
-void drivingDataInput::stopWriteDRABuffFile()
+void drivingDataInput::stopWriteDRABuffFile(QString taskEndStatus)
 {
     timerBuffer->stop();
     taskEndTime = makeTime();
@@ -376,7 +376,7 @@ void drivingDataInput::stopWriteDRABuffFile()
             if (summaryFile.size() == 0) {
                 out << "UnixTimestamp,ParticipantID,AbsTaskNum,TaskOrder,TaskName,RepNumber,"
                     << "TaskComplexity,ControlTypes,TaskDuration(Sec),TaskStartTime,TaskEndTime,NumberOfErrors,"
-                    << "MeanAttenD,MeanHeadway,SDOLanePos,MeanSpeed"
+                    << "MeanAttenD,MeanHeadway,SDOLanePos,MeanSpeed,EndStatus"
                     << Qt::endl;
             }
             if (m_currentTask) {
@@ -395,7 +395,8 @@ void drivingDataInput::stopWriteDRABuffFile()
                     << meanLiveAttenD << ","   // attentional demand
                     << meanHeadway << ","
                     << sdLanePos << ","
-                    << meanSpeed
+                    << meanSpeed << ","
+                    << taskEndStatus
                     << Qt::endl;
             }
         }

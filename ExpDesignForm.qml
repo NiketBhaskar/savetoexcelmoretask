@@ -135,43 +135,72 @@ Item {
                     taskConditionBox.currentIndex = taskConditionBox.currentIndex+1
                     //Stop AHEAD collection
                     stop_AHEAD_DataFile()
-                    stop_DRA_DataFile()
+                    stop_DRA_DataFile("COMPLETE")
                //     stopWriteTaskBuffFile()
                     armed = false
 
                 }
                 enabled: logging.logging
             }
-//            Connections {
-//                    target: tcpServer
-//                    onStateUpdated: {
-//                        if (armed && checked && index >= 0 && index < 12) {
-//                            armed = false
-//                            taskEndLabel.clicked()     // simulate click (runs your existing Stop handler)
-//                        }
-//                    }
-//                }
             Button {
-                id: drivingOnlyLabel
+                id: taskEndPartialLabel
                 x: 0
                 y: 130
                 width: 120
                 height: 23
-                text: qsTr("DRIVING ONLY")
-                onClicked: writeDataLabelQML("DRIVING ONLY")
+                text: qsTr("TASK END PARTIAL")
+                onClicked: {
+                    writeDataLabelQML("TASK END PARTIAL")
+                    taskConditionBox.currentIndex = taskConditionBox.currentIndex+1
+                    //Stop AHEAD collection
+                    stop_AHEAD_DataFile()
+                    stop_DRA_DataFile("PARTIAL")
+               //     stopWriteTaskBuffFile()
+                    armed = false
+
+                }
                 enabled: logging.logging
             }
-
             Button {
-                id: multitaskingLabel
+                id: taskEndIncompleteLabel
                 x: 135
                 y: 130
                 width: 120
                 height: 23
-                text: qsTr("MULTITASKING")
-                onClicked: writeDataLabelQML("MULTITASKING")
+                text: qsTr("TASK END INCOMPLETE")
+                onClicked: {
+                    writeDataLabelQML("TASK END INCOMPLETE")
+                    taskConditionBox.currentIndex = taskConditionBox.currentIndex+1
+                    //Stop AHEAD collection
+                    stop_AHEAD_DataFile()
+                    stop_DRA_DataFile("INCOMPLETE")
+               //     stopWriteTaskBuffFile()
+                    armed = false
+
+                }
                 enabled: logging.logging
             }
+//            Button {
+//                id: drivingOnlyLabel
+//                x: 0
+//                y: 130
+//                width: 120
+//                height: 23
+//                text: qsTr("DRIVING ONLY")
+//                onClicked: writeDataLabelQML("DRIVING ONLY")
+//                enabled: logging.logging
+//            }
+
+//            Button {
+//                id: multitaskingLabel
+//                x: 135
+//                y: 130
+//                width: 120
+//                height: 23
+//                text: qsTr("MULTITASKING")
+//                onClicked: writeDataLabelQML("MULTITASKING")
+//                enabled: logging.logging
+//            }
 
             TextField {
                 id: manualTextLabel
@@ -310,6 +339,12 @@ Item {
     }
     function triggerEnd() {
         taskEndLabel.clicked()  // or just duplicate the logic directly here
+    }
+    function triggerEndPartial() {
+        taskEndPartialLabel.clicked()  // or just duplicate the logic directly here
+    }
+    function triggerEndIncomplete() {
+        taskEndIncompleteLabel.clicked()  // or just duplicate the logic directly here
     }
 //    Audio{
 //        id: accInstruction

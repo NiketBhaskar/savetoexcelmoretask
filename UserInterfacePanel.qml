@@ -446,7 +446,7 @@ Item {
     Text {
         id: unixStamp
         x: 15
-        y: 155
+        y: 140
         width: 572
         height: 57
         text: qsTr("Unix time will appear here")

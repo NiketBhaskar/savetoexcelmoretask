@@ -19,7 +19,15 @@ Item {
     }
     property int currentState: TestScript.TaskState.Idle
     property int savedRepFilter: 1  // Save user's rep selection when doing baseline/experienced
+    property MediaPlayer nextAfterBeep: null
 
+    function playBeepThen(player) {
+        // defensively stop both to handle rapid clicks
+        if (player) player.stop()
+        beepSound.stop()
+        nextAfterBeep = player
+        beepSound.play()
+    }
     function setTerminalWindowTaskProperty(deviceVal, eventVal) {
         lastDeviceVal = deviceVal
         lastEventVal  = eventVal
@@ -39,19 +47,87 @@ Item {
             }
         }
     }
+    // --- Stuck/resume detection state ---
+    property real lastRoundedTime: -1.0
+    property int sameRunCount: 0
+    property bool autoPauseActive: false
+    property int requiredSameCount: 3     // trigger after 3 identical values
+    property int decimals: 5              // precision: 5 decimal places
+
+    function roundN(x, n) {
+        var f = Math.pow(10, n)
+        return Math.round(x * f) / f
+    }
+
+    // --- Main function ---
+    function datafromSim(timeVal) {
+        // Monitor only when tasks are active
+        if (currentState !== TestScript.TaskState.TasksActive)
+            return
+
+        var r = roundN(timeVal, decimals)
+
+        // Initialize on first data
+        if (lastRoundedTime < 0) {
+            lastRoundedTime = r
+            sameRunCount = 1
+            return
+        }
+
+        // --- Case 1: Time increasing normally ---
+        if (r > lastRoundedTime) {
+            sameRunCount = 1
+
+            // Resume if previously auto-paused and button is enabled
+            if (autoPauseActive && taskModel.isPaused && pauseResumeBtn.enabled) {
+                pauseResumeBtn.clicked()
+                autoPauseActive = false
+            }
+
+            lastRoundedTime = r
+            return
+        }
+
+        // --- Case 2: Time same (possible stall) ---
+        if (r === lastRoundedTime) {
+            sameRunCount += 1
+
+            // If same value repeated enough times → pause
+            if (sameRunCount >= requiredSameCount) {
+                if (!autoPauseActive && !taskModel.isPaused && pauseResumeBtn.enabled) {
+                    pauseResumeBtn.clicked()
+                    autoPauseActive = true
+                }
+                sameRunCount = 0 // reset counter after triggering
+            }
+            return
+        }
+
+        // --- Case 3: Time went backwards (reset or loop) ---
+        if (r < lastRoundedTime) {
+            sameRunCount = 1
+            lastRoundedTime = r
+            return
+        }
+    }
+
+    // --- Unified pause/resume trigger (uses your button when possible) ---
+    function clickPauseResumeSafely(targetPaused) {
+        const canUseButton =
+            pauseResumeBtn.enabled &&
+            currentState === TestScript.TaskState.TasksActive &&
+            !taskModel.hasActiveTask
+
+        if (taskModel.isPaused !== targetPaused) {
+            if (canUseButton) {
+                pauseResumeBtn.clicked()      // simulate real press
+            } else {
+                taskModel.setPaused(targetPaused) // fallback to model
+            }
+        }
+    }
 
     // Audio players
-    MediaPlayer {
-        id: baselineSound
-        source: "qrc:/audio/audio/baseline.mp3"
-        audioOutput: AudioOutput { id: baselineSoundOut }
-    }
-
-    MediaPlayer {
-        id: experiencedSound
-        source: "qrc:/audio/audio/experienced.mp3"
-        audioOutput: AudioOutput { id: experiencedSoundOut }
-    }
 
     MediaPlayer {
         id: t1Sound
@@ -60,10 +136,18 @@ Item {
     }
 
     MediaPlayer {
-        id: t5Sound
-        source: "qrc:/audio/audio/T5- 24.mp3"
-        audioOutput: AudioOutput { id: t5SoundOut }
-    }
+            id: t5Sound
+            source: taskModel.repFilter === 1? "qrc:/audio/audio/T5_24.mp3"
+                  : taskModel.repFilter === 2? "qrc:/audio/audio/T5_28.mp3"
+                  : taskModel.repFilter === 3? "qrc:/audio/audio/T5_24.mp3"
+                  : taskModel.repFilter === 4? "qrc:/audio/audio/T5_20.mp3"
+                  : taskModel.repFilter === 5? "qrc:/audio/audio/T5_16.mp3"
+                  : taskModel.repFilter === 6? "qrc:/audio/audio/T5_20.mp3"
+                  : taskModel.repFilter === 7? "qrc:/audio/audio/T5_24.mp3"
+                  : taskModel.repFilter === 8? "qrc:/audio/audio/T5_28.mp3"
+                  : taskModel.repFilter === 9? "qrc:/audio/audio/T5_24.mp3" : "qrc:/audio/audio/T5_20.mp3"
+            audioOutput: AudioOutput { id: t5SoundOut }
+        }
 
     MediaPlayer {
         id: t9Sound
@@ -72,10 +156,24 @@ Item {
     }
 
     MediaPlayer {
-        id: t11Sound
-        source: "qrc:/audio/audio/T11- Bangor.mp3"
-        audioOutput: AudioOutput { id: t11SoundOut }
+        id: beepSound
+        source: "qrc:/audio/audio/Beep.mp3"
+        audioOutput: AudioOutput { id: beepSoundOut }
     }
+
+    MediaPlayer {
+            id: t11Sound
+            source: taskModel.repFilter === 1? "qrc:/audio/audio/T11_Bangor.mp3"
+                  : taskModel.repFilter === 2? "qrc:/audio/audio/T11_Bolton.mp3"
+                  : taskModel.repFilter === 3? "qrc:/audio/audio/T11_Boston.mp3"
+                  : taskModel.repFilter === 4? "qrc:/audio/audio/T11_Durham.mp3"
+                  : taskModel.repFilter === 5? "qrc:/audio/audio/T11_Exeter.mp3"
+                  : taskModel.repFilter === 6? "qrc:/audio/audio/T11-Gaydon.mp3"
+                  : taskModel.repFilter === 7? "qrc:/audio/audio/T11_Woking.mp3"
+                  : taskModel.repFilter === 8? "qrc:/audio/audio/T11_Oxford.mp3"
+                  : taskModel.repFilter === 9? "qrc:/audio/audio/T11_Marlow.mp3" : "qrc:/audio/audio/T11_Oldham.mp3"
+            audioOutput: AudioOutput { id: t11SoundOut }
+        }
 
     MediaPlayer {
         id: t12Sound
@@ -90,44 +188,66 @@ Item {
     }
 
     MediaPlayer {
-        id: t16Sound
-        source: "qrc:/audio/audio/T16-left.mp3"
-        audioOutput: AudioOutput { id: t16SoundOut }
-    }
-
-    MediaPlayer {
         id: t18Sound
-        source: "qrc:/audio/audio/T18-split.mp3"
+        source: "qrc:/audio/audio/T18_Split.mp3"
         audioOutput: AudioOutput { id: t18SoundOut }
     }
 
     MediaPlayer {
-        id: t19Sound
-        source: "qrc:/audio/audio/T19-on.mp3"
-        audioOutput: AudioOutput { id: t19SoundOut }
-    }
+            id: t21Sound
+            source: taskModel.repFilter === 1? "qrc:/audio/audio/T21_Virgin Radio UK.mp3"
+                  : taskModel.repFilter === 2? "qrc:/audio/audio/T21_Times Radio.mp3"
+                  : taskModel.repFilter === 3? "qrc:/audio/audio/T21_Classic FM.mp3"
+                  : taskModel.repFilter === 4? "qrc:/audio/audio/T21_Talksports.mp3"
+                  : taskModel.repFilter === 5? "qrc:/audio/audio/T21_LBC.mp3"
+                  : taskModel.repFilter === 6? "qrc:/audio/audio/T21_Radio X.mp3"
+                  : taskModel.repFilter === 7? "qrc:/audio/audio/T21_Virgin Radio UK.mp3"
+                  : taskModel.repFilter === 8? "qrc:/audio/audio/T21_Classic FM.mp3"
+                  : taskModel.repFilter === 9? "qrc:/audio/audio/T21_Times Radio.mp3" : "qrc:/audio/audio/T21_Talksports.mp3"
+            audioOutput: AudioOutput { id: t21SoundOut }
+        }
 
     MediaPlayer {
-        id: t21Sound
-        source: "qrc:/audio/audio/T21- Virgin Radio UK.mp3"
-        audioOutput: AudioOutput { id: t21SoundOut }
-    }
-
+            id: t16Sound
+            source: taskModel.repFilter%2 === 0? "qrc:/audio/audio/T16_Left.mp3"
+                  : "qrc:/audio/audio/T16_Right.mp3"
+            audioOutput: AudioOutput { id: t16SoundOut }
+        }
     MediaPlayer {
-        id: t22Sound
-        source: "qrc:/audio/audio/T22- Comfort.mp3"
-        audioOutput: AudioOutput { id: t22SoundOut }
-    }
+            id: t22Sound
+            source: taskModel.repFilter%2 === 0? "qrc:/audio/audio/T22_Comfort.mp3"
+                  : "qrc:/audio/audio/T22_Dynamic.mp3"
+            audioOutput: AudioOutput { id: t22SoundOut }
+        }
+    MediaPlayer {
+            id: t19Sound
+            source: taskModel.repFilter%2 === 0? "qrc:/audio/audio/T19_On.mp3"
+                  : "qrc:/audio/audio/T19_Off.mp3"
+            audioOutput: AudioOutput { id: t19SoundOut }
+        }
 
     MediaPlayer {
         id: t23Sound
         source: "qrc:/audio/audio/T23.mp3"
         audioOutput: AudioOutput { id: t23SoundOut }
     }
+    // Timer logic _for baseline and end drive timer
+    property int elapsedSeconds: 0
+    Timer {
+        id: elapsedTimer
+        interval: 1000 // 1 second
+        repeat: true
+        running: false
+        onTriggered: {
+            elapsedSeconds++
+        }
+    }
 
+    // Timer logic - for activating next tsak
     Timer {
         id: autoNextTimer
-        interval: 5000
+    //    interval: 10000
+        interval: 3000
         repeat: false
         onTriggered: {
             if (!taskModel.hasActiveTask && !taskModel.isPaused &&
@@ -137,8 +257,9 @@ Item {
         }
     }
 
+
     Column {
-        spacing: 4
+        spacing: 1
 
         // Top control row - BASELINE AND EXPERIENCED
         Row {
@@ -154,7 +275,8 @@ Item {
                 enabled: currentState === TestScript.TaskState.Idle && !taskModel.isPaused
                 onClicked: {
                     currentState = TestScript.TaskState.BaselineActive
-
+                    elapsedSeconds = 0
+                    elapsedTimer.start()
                     // Save current rep filter
                     savedRepFilter = taskModel.repFilter
 
@@ -163,7 +285,6 @@ Item {
                     taskModel.setActiveTaskByIndex(0)
 
                     if (taskModel.currentActiveTask) {
-                        baselineSound.play()
                         expdesignform.triggerSave()
                     }
                 }
@@ -176,7 +297,7 @@ Item {
                 onClicked: {
                     expdesignform.triggerEnd()
                     taskModel.clearActiveTask()
-
+                    elapsedTimer.stop()
                     // ✅ Restore previous rep filter
                     taskModel.repFilter = savedRepFilter
 
@@ -190,7 +311,8 @@ Item {
                 enabled: currentState === TestScript.TaskState.Idle && !taskModel.isPaused
                 onClicked: {
                     currentState = TestScript.TaskState.ExperiencedActive
-
+                    elapsedSeconds = 0
+                    elapsedTimer.start()
                     // Save current rep filter
                     savedRepFilter = taskModel.repFilter
 
@@ -199,7 +321,6 @@ Item {
                     taskModel.setActiveTaskByIndex(0)
 
                     if (taskModel.currentActiveTask) {
-                        experiencedSound.play()
                         expdesignform.triggerSave()
                     }
                 }
@@ -212,7 +333,7 @@ Item {
                 onClicked: {
                     expdesignform.triggerEnd()
                     taskModel.clearActiveTask()
-
+                    elapsedTimer.stop()
                     // ✅ Restore previous rep filter
                     taskModel.repFilter = savedRepFilter
 
@@ -222,11 +343,39 @@ Item {
 
             // Visual separator
             Rectangle {
-                width: 2
+                width: 1
                 height: parent.height
                 color: "gray"
             }
+            // Timer display next to the button
+            Text {
+                id: timerDisplay
+                font.pixelSize: 16
+                font.bold: true
+                color: elapsedTimer.running ? "#00AA00" : "#666666"
+                text: {
+                    var hours = Math.floor(elapsedSeconds / 3600)
+                    var minutes = Math.floor((elapsedSeconds % 3600) / 60)
+                    var seconds = elapsedSeconds % 60
 
+                    if (hours > 0) {
+                        return String(hours).padStart(2, '0') + ":" +
+                               String(minutes).padStart(2, '0') + ":" +
+                               String(seconds).padStart(2, '0')
+                    } else {
+                        return String(minutes).padStart(2, '0') + ":" +
+                               String(seconds).padStart(2, '0')
+                    }
+                }
+            }
+
+
+            // Visual separator
+            Rectangle {
+                width: 1
+                height: parent.height
+                color: "gray"
+            }
             Button {
                 id: pauseResumeBtn
                 text: taskModel.isPaused ? "Resume" : "Pause"
@@ -246,15 +395,12 @@ Item {
 
         // REGULAR TASKS (1-120) Section
         Row {
-            spacing: 20
-            Label {
-                text: "Regular Tasks (1-120):"
-                font.bold: true
-            }
+            spacing: 10
+
 
             ComboBox {
                 id: repSelector
-                width: 200
+                width: 100
                 model: ["Rep 1 (Tasks 1-12)", "Rep 2 (Tasks 13-24)", "Rep 3 (Tasks 25-36)",
                         "Rep 4 (Tasks 37-48)", "Rep 5 (Tasks 49-60)", "Rep 6 (Tasks 61-72)",
                         "Rep 7 (Tasks 73-84)", "Rep 8 (Tasks 85-96)", "Rep 9 (Tasks 97-108)",
@@ -339,7 +485,7 @@ Item {
 
             Button {
                 id: endTaskBtn
-                text: "End Task"
+                text: "Completed Task"
                 enabled: currentState === TestScript.TaskState.TasksActive && taskModel.hasActiveTask
                 onClicked: {
                     expdesignform.triggerEnd()
@@ -356,25 +502,65 @@ Item {
                     }
                 }
             }
-
-            // Stop All Tasks button (emergency stop)
             Button {
-                id: stopAllTasksBtn
-                text: "Stop All Tasks"
-                enabled: currentState === TestScript.TaskState.TasksActive
+                id: partialEndTaskBtn
+                text: "Partial Completed Task"
+                enabled: currentState === TestScript.TaskState.TasksActive && taskModel.hasActiveTask
                 onClicked: {
-                    if (taskModel.hasActiveTask) {
-                        expdesignform.triggerEnd()
-                        taskModel.clearActiveTask()
-                    }
-                    currentState = TestScript.TaskState.Idle
-                    taskModel.setPaused(false)
-                    autoNextTimer.stop()
+                    expdesignform.triggerEndPartial()
 
-                    // Restore rep filter
-                    taskModel.repFilter = savedRepFilter
+                    if (taskModel.currentActiveTask) {
+                        var absNum = taskModel.currentActiveTask.absoluteTaskNum
+                        checkAndSetTask(absNum, false)
+                    }
+
+                    taskModel.clearActiveTask()
+
+                    if (!taskModel.isPaused) {
+                        autoNextTimer.restart()
+                    }
                 }
             }
+
+            Button {
+                id: incorrectEndTaskBtn
+                text: "Incomplete Task"
+                enabled: currentState === TestScript.TaskState.TasksActive && taskModel.hasActiveTask
+                onClicked: {
+                    expdesignform.triggerEndIncomplete()
+
+                    if (taskModel.currentActiveTask) {
+                        var absNum = taskModel.currentActiveTask.absoluteTaskNum
+                        checkAndSetTask(absNum, false)
+                    }
+
+                    taskModel.clearActiveTask()
+
+                    if (!taskModel.isPaused) {
+                        autoNextTimer.restart()
+                    }
+                }
+            }
+
+
+            // Stop All Tasks button (emergency stop)
+//            Button {
+//                id: stopAllTasksBtn
+//                text: "Stop All Tasks"
+//                enabled: currentState === TestScript.TaskState.TasksActive
+//                onClicked: {
+//                    if (taskModel.hasActiveTask) {
+//                        expdesignform.triggerEnd()
+//                        taskModel.clearActiveTask()
+//                    }
+//                    currentState = TestScript.TaskState.Idle
+//                    taskModel.setPaused(false)
+//                    autoNextTimer.stop()
+
+//                    // Restore rep filter
+//                    taskModel.repFilter = savedRepFilter
+//                }
+//            }
         }
 
         // Status indicator
@@ -414,11 +600,11 @@ Item {
         Row {
             spacing: 40
             width: parent.width
-            Rectangle { width: 60; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Task Order" } }
-            Rectangle { width: 40; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Abs#" } }
-            Rectangle { width: 120; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Name" } }
-            Rectangle { width: 40; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Comp" } }
-            Rectangle { width: 90; height: 20; color: "lightgray"; Text { anchors.centerIn: parent; text: "Control" } }
+            Rectangle { width: 60; height: 18; color: "lightgray"; Text { anchors.centerIn: parent; text: "Task Order" } }
+            Rectangle { width: 40; height: 18; color: "lightgray"; Text { anchors.centerIn: parent; text: "Abs#" } }
+            Rectangle { width: 120; height: 18; color: "lightgray"; Text { anchors.centerIn: parent; text: "Name" } }
+            Rectangle { width: 40; height: 18; color: "lightgray"; Text { anchors.centerIn: parent; text: "Comp" } }
+            Rectangle { width: 90; height: 18; color: "lightgray"; Text { anchors.centerIn: parent; text: "Control" } }
         }
 
         // Task list
@@ -430,35 +616,35 @@ Item {
             clip: true
 
             delegate: Row {
-                height: 20
+                height: 17
                 spacing: 40
 
                 Rectangle {
-                    width: 60; height: 20
+                    width: 60; height: 17
                     color: model.isActive ? "lightgreen" : "transparent"
                     border.width: 1
                     Text { anchors.centerIn: parent; text: model.taskOrder }
                 }
                 Rectangle {
-                    width: 40; height: 20
+                    width: 40; height: 17
                     color: model.isActive ? "lightgreen" : "transparent"
                     border.width: 1
                     Text { anchors.centerIn: parent; text: model.absoluteTaskNum }
                 }
                 Rectangle {
-                    width: 120; height: 20
+                    width: 120; height: 17
                     color: model.isActive ? "lightgreen" : "transparent"
                     border.width: 1
                     Text { anchors.centerIn: parent; text: model.name; wrapMode: Text.WordWrap }
                 }
                 Rectangle {
-                    width: 40; height: 20
+                    width: 40; height: 17
                     color: model.isActive ? "lightgreen" : "transparent"
                     border.width: 1
                     Text { anchors.centerIn: parent; text: model.complexity }
                 }
                 Rectangle {
-                    width: 90; height: 20
+                    width: 90; height: 17
                     color: model.isActive ? "lightgreen" : "transparent"
                     border.width: 1
                     Text { anchors.centerIn: parent; text: model.controlTypes }
@@ -485,20 +671,30 @@ Item {
 
         var taskName = taskModel.currentActiveTask.name
 
-        if (taskName === "Navigation") t11Sound.play()
-        else if (taskName === "External Temp") t1Sound.play()
-        else if (taskName === "Temp adjust") t5Sound.play()
-        else if (taskName === "Split Airflow") t18Sound.play()
-        else if (taskName === "wash/wipe") t14Sound.play()
-        else if (taskName === "flick wipe") t12Sound.play()
-        else if (taskName === "pause media") t9Sound.play()
-        else if (taskName === "Fuel check") t23Sound.play()
-        else if (taskName === "Radio selection") t21Sound.play()
-        else if (taskName === "give indicator") t16Sound.play()
-        else if (taskName === "Driver mode") t22Sound.play()
-        else if (taskName === "Country Road") t19Sound.play()
+        if (taskName === "Navigation")            playBeepThen(t11Sound)
+        else if (taskName === "External Temp")    playBeepThen(t1Sound)
+        else if (taskName === "Temp adjust")      playBeepThen(t5Sound)
+        else if (taskName === "Split Airflow")    playBeepThen(t18Sound)
+        else if (taskName === "wash/wipe")        playBeepThen(t14Sound)
+        else if (taskName === "flick wipe")       playBeepThen(t12Sound)
+        else if (taskName === "pause media") {
+            tcpServer.send(14, true)
+            playBeepThen(t9Sound)
+            // If those tcpServer calls must be AFTER the instruction starts,
+            // move them into the beep completion handler instead.
+            tcpServer.send(12, true)
+        }
+        else if (taskName === "Fuel check")       playBeepThen(t23Sound)
+        else if (taskName === "Radio selection") {
+            tcpServer.send(13, true)
+            playBeepThen(t21Sound)
+        }
+        else if (taskName === "give indicator")   playBeepThen(t16Sound)
+        else if (taskName === "Driver mode")      playBeepThen(t22Sound)
+        else if (taskName === "Country Road")     playBeepThen(t19Sound)
         else console.log("No audio mapping for task: " + taskName)
     }
+
 
     // Initialize filters
     Component.onCompleted: {
@@ -522,6 +718,20 @@ Item {
             taskModel.setPaused(false)
         }
     }
-
+    Connections {
+            target: beepSound
+            onPlaybackStateChanged: {
+                // In Qt 5.15: MediaPlayer.StoppedState when it finishes
+                if (beepSound.playbackState === MediaPlayer.StoppedState && nextAfterBeep) {
+                    nextAfterBeep.play()
+                    nextAfterBeep = null
+                }
+            }
+            // (Optional) handle errors
+            onErrorOccurred: {
+                console.warn("Beep error:", beepSound.errorString)
+                if (nextAfterBeep) { nextAfterBeep.play(); nextAfterBeep = null }
+            }
+        }
     signal requestCheckTask(int taskNum, bool state)
 }

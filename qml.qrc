@@ -19,45 +19,43 @@
         <file>TTSO.qml</file>
     </qresource>
     <qresource prefix="/audio">
-        <file>audio/baseline.mp3</file>
         <file>audio/T1.mp3</file>
-        <file>audio/T5- 16.mp3</file>
-        <file>audio/T5- 20.mp3</file>
-        <file>audio/T5- 24.mp3</file>
-        <file>audio/T5- 28.mp3</file>
         <file>audio/T9.mp3</file>
-        <file>audio/T11- Bangor.mp3</file>
-        <file>audio/T11- Bolton.mp3</file>
-        <file>audio/T11- Boston.mp3</file>
-        <file>audio/T11- Durham.mp3</file>
-        <file>audio/T11- Exeter.mp3</file>
-        <file>audio/T11- Hexham.mp3</file>
-        <file>audio/T11- Kendal.mp3</file>
-        <file>audio/T11- Marlow.mp3</file>
-        <file>audio/T11- Oldham.mp3</file>
-        <file>audio/T11- Oxford.mp3</file>
-        <file>audio/T11- Whitby.mp3</file>
-        <file>audio/T11- Woking.mp3</file>
-        <file>audio/T11- Yeovil.mp3</file>
-        <file>audio/T11-Gaydon.mp3</file>
         <file>audio/T12.mp3</file>
         <file>audio/T14.mp3</file>
-        <file>audio/T16-left.mp3</file>
-        <file>audio/T16-right.mp3</file>
-        <file>audio/T18-merge.mp3</file>
-        <file>audio/T18-split.mp3</file>
-        <file>audio/T19-off.mp3</file>
-        <file>audio/T19-on.mp3</file>
-        <file>audio/T21- Classic FM.mp3</file>
-        <file>audio/T21- LBC.mp3</file>
-        <file>audio/T21- Radio X.mp3</file>
-        <file>audio/T21- Talksports.mp3</file>
-        <file>audio/T21- Times Radio.mp3</file>
-        <file>audio/T21- Virgin Radio UK.mp3</file>
-        <file>audio/T21-Sydney.mp3</file>
-        <file>audio/T22- Comfort.mp3</file>
-        <file>audio/T22- Dynamic.mp3</file>
         <file>audio/T23.mp3</file>
-        <file>audio/experienced.mp3</file>
+        <file>audio/T5_16.mp3</file>
+        <file>audio/T5_20.mp3</file>
+        <file>audio/T5_24.mp3</file>
+        <file>audio/T5_28.mp3</file>
+        <file>audio/T11_Bangor.mp3</file>
+        <file>audio/T11_Bolton.mp3</file>
+        <file>audio/T11_Boston.mp3</file>
+        <file>audio/T11_Durham.mp3</file>
+        <file>audio/T11_Exeter.mp3</file>
+        <file>audio/T11_Gaydon.mp3</file>
+        <file>audio/T11_Hexham.mp3</file>
+        <file>audio/T11_Kendal.mp3</file>
+        <file>audio/T11_Marlow.mp3</file>
+        <file>audio/T11_Oldham.mp3</file>
+        <file>audio/T11_Oxford.mp3</file>
+        <file>audio/T11_Whitby.mp3</file>
+        <file>audio/T11_Woking.mp3</file>
+        <file>audio/T11_Yeovil.mp3</file>
+        <file>audio/T16_Left.mp3</file>
+        <file>audio/T16_Right.mp3</file>
+        <file>audio/T18_Merge.mp3</file>
+        <file>audio/T18_Split.mp3</file>
+        <file>audio/T19_Off.mp3</file>
+        <file>audio/T19_On.mp3</file>
+        <file>audio/T21_Classic FM.mp3</file>
+        <file>audio/T21_LBC.mp3</file>
+        <file>audio/T21_Radio X.mp3</file>
+        <file>audio/T21_Talksports.mp3</file>
+        <file>audio/T21_Times Radio.mp3</file>
+        <file>audio/T21_Virgin Radio UK.mp3</file>
+        <file>audio/T22_Comfort.mp3</file>
+        <file>audio/T22_Dynamic.mp3</file>
+        <file>audio/Beep.mp3</file>
     </qresource>
 </RCC>

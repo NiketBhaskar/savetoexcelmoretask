@@ -111,7 +111,7 @@ class drivingDataInput: public QObject
                                                    double &sdLanePos,
                                                    double &meanSpeed);
         void startWriteDRABuffFile(QString fileNum);                            //Start stop write data to file
-        void stopWriteDRABuffFile();
+        void stopWriteDRABuffFile(QString taskEndStatus);
         void writeDRABuffFile();
         void updateDrivingDataOnOff(QString draOnOff);                           //Status update for driving data logging on/off
         void recievedDataCOM(QByteArray drivingDataCOM);                         //Update function for incoming data from Hear Rate Sensor

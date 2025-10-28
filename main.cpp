@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
      QObject::connect(window, SIGNAL(start_DRA_DataFile(QString)), &draInput, SLOT(startWriteDRABuffFile(QString)));
     //RECEIVING DATA FROM QML - Update Eye IP and Port Settings
     QObject::connect(window, SIGNAL(stop_AHEAD_DataFile()), &eyeInput, SLOT(stopWriteAttBuffFile()));
-        QObject::connect(window, SIGNAL(stop_DRA_DataFile()), &draInput, SLOT(stopWriteDRABuffFile()));
+        QObject::connect(window, SIGNAL(stop_DRA_DataFile(QString)), &draInput, SLOT(stopWriteDRABuffFile(QString)));
 
     //OBJECTS FROM QML TO UDPMESSAGINGOUTPUT.H//
 
