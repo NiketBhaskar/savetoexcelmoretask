@@ -6,7 +6,6 @@ import QtMultimedia
 Item {
     id: testScript
     property alias endTaskBtn: endTaskBtn
-    property string indicatorSignal: "none"
     property string lastDeviceVal: "No Data Available"
     property string lastEventVal:  "No Data Available"
 
@@ -31,10 +30,6 @@ Item {
     function setTerminalWindowTaskProperty(deviceVal, eventVal) {
         lastDeviceVal = deviceVal
         lastEventVal  = eventVal
-
-        if (eventVal === "LeftIndicatorOn" || eventVal === "RightIndicatorOn") {
-            indicatorSignal = (eventVal === "LeftIndicatorOn") ? "Left" : "Right"
-        }
 
         // Auto-end task 16 when indicator turns on
         if (eventVal === "LeftIndicatorOn" || eventVal === "RightIndicatorOn") {
@@ -231,6 +226,11 @@ Item {
         source: "qrc:/audio/audio/T23.mp3"
         audioOutput: AudioOutput { id: t23SoundOut }
     }
+    MediaPlayer {
+        id: timeoutSound
+        source: "qrc:/audio/audio/failedtimeout.mp3"
+        audioOutput: AudioOutput { id: timeoutSoundOut }
+    }
     // Timer logic _for baseline and end drive timer
     property int elapsedSeconds: 0
     Timer {
@@ -257,7 +257,40 @@ Item {
         }
     }
 
+    // Timer for task timeout - auto-end incomplete tasks
+    Timer {
+        id: taskTimeoutTimer
+        repeat: false
+        onTriggered: {
+            if (taskModel.hasActiveTask && currentState === TestScript.TaskState.TasksActive) {
+                console.log("Task timeout - automatically ending as incomplete")
 
+                timeoutSound.play()
+
+                // Wait a brief moment then click incomplete button
+                Qt.callLater(function() {
+                    if (taskModel.hasActiveTask) {
+                        incorrectEndTaskBtn.clicked()
+                    }
+                })
+            }
+        }
+    }
+
+    // Helper function to get timeout duration for current task
+    function getTaskTimeout() {
+        if (!taskModel.currentActiveTask) return 30000 // default 30 seconds
+
+        var taskName = taskModel.currentActiveTask.name
+
+        // 60 seconds for Navigation and Driver mode
+        if (taskName === "Navigation" || taskName === "Driver mode") {
+            return 60000  // 60 seconds
+        }
+
+        // 30 seconds for all other tasks
+        return 30000  // 30 seconds
+    }
     Column {
         spacing: 1
 
@@ -382,6 +415,9 @@ Item {
                 enabled: currentState === TestScript.TaskState.TasksActive && !taskModel.hasActiveTask
                 onClicked: {
                     taskModel.setPaused(!taskModel.isPaused)
+                    if (taskModel.isPaused) {
+                                taskTimeoutTimer.stop()
+                            }
                 }
             }
         }
@@ -425,7 +461,7 @@ Item {
                 onClicked: {
                     currentState = TestScript.TaskState.TasksActive
 
-                    // ✅ Make sure we're showing the selected rep
+                    // Make sure we're showing the selected rep
                     taskModel.repFilter = repSelector.currentIndex + 1
                     savedRepFilter = taskModel.repFilter
 
@@ -436,6 +472,11 @@ Item {
                         checkAndSetTask(taskModel.currentActiveTask.absoluteTaskNum)
                         playAudioForCurrentTask()
                         expdesignform.triggerSave()
+
+                        // START TIMEOUT TIMER
+                        taskTimeoutTimer.interval = getTaskTimeout()
+                        taskTimeoutTimer.start()
+
                     }
                 }
             }
@@ -458,6 +499,10 @@ Item {
                             checkAndSetTask(taskModel.currentActiveTask.absoluteTaskNum)
                             playAudioForCurrentTask()
                             expdesignform.triggerSave()
+
+                            // START TIMEOUT TIMER
+                            taskTimeoutTimer.interval = getTaskTimeout()
+                            taskTimeoutTimer.start()
                         }
                     } else {
                         // Check if we need to move to next rep
@@ -472,6 +517,9 @@ Item {
                                 checkAndSetTask(taskModel.currentActiveTask.absoluteTaskNum)
                                 playAudioForCurrentTask()
                                 expdesignform.triggerSave()
+                                // START TIMEOUT TIMER
+                                taskTimeoutTimer.interval = getTaskTimeout()
+                                taskTimeoutTimer.start()
                             }
                         } else {
                             // All 120 tasks complete
@@ -488,6 +536,8 @@ Item {
                 text: "Completed Task"
                 enabled: currentState === TestScript.TaskState.TasksActive && taskModel.hasActiveTask
                 onClicked: {
+                    // STOP TIMEOUT TIMER
+                    taskTimeoutTimer.stop()
                     expdesignform.triggerEnd()
 
                     if (taskModel.currentActiveTask) {
@@ -507,6 +557,8 @@ Item {
                 text: "Partial Completed Task"
                 enabled: currentState === TestScript.TaskState.TasksActive && taskModel.hasActiveTask
                 onClicked: {
+                    // STOP TIMEOUT TIMER
+                    taskTimeoutTimer.stop()
                     expdesignform.triggerEndPartial()
 
                     if (taskModel.currentActiveTask) {
@@ -528,6 +580,9 @@ Item {
                 enabled: currentState === TestScript.TaskState.TasksActive && taskModel.hasActiveTask
                 onClicked: {
                     expdesignform.triggerEndIncomplete()
+                    // STOP TIMEOUT TIMER
+                    taskTimeoutTimer.stop()
+
 
                     if (taskModel.currentActiveTask) {
                         var absNum = taskModel.currentActiveTask.absoluteTaskNum

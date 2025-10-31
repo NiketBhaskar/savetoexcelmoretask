@@ -25,5 +25,5 @@ private slots:
 private:
     QTcpServer server_;
     QList<QTcpSocket*> clients_;
-    QVector<bool> stateVec_{QVector<bool>(16, false)};  // 16 checkboxes
+    QVector<bool> stateVec_{QVector<bool>(19, false)};  // 16 checkboxes
 };

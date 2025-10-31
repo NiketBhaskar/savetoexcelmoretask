@@ -168,7 +168,7 @@ Item {
             anchors.topMargin: 5
             Repeater {
                 id: taskRepeater
-                model: 16
+                model: 19
                 delegate: CheckBox {
                     id: cb
                     property int taskIndex: index + 1   // Task 1..16

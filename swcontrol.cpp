@@ -8,6 +8,7 @@
 #include <QDateTime>
 #include "udpmessagingoutput.h"
 #include "drivingdatainput.h"
+#include "server.h"  // ✅ Include server header
 #include <QVariant>
 
 SWControl::SWControl(QObject *parent)
@@ -25,10 +26,11 @@ SWControl::SWControl(QObject *parent)
     senderSocket = new QUdpSocket(this);
 }
 
-void SWControl::initObjects(UDPMessagingOutput *udpmessagingoutput_ptr, drivingDataInput *drivingDataInput_ptr)
+void SWControl::initObjects(UDPMessagingOutput *udpmessagingoutput_ptr, drivingDataInput *drivingDataInput_ptr, Server *server_ptr)  // ✅ Added Server parameter
 {
     updOutputData = udpmessagingoutput_ptr;
     draData = drivingDataInput_ptr;
+    tcpServer = server_ptr;  // ✅ Store server pointer
 }
 
 void SWControl::forwardToOtherApp(const QByteArray &payload)
@@ -67,16 +69,30 @@ void SWControl::recievedDataSWControl(QByteArray ADASmessage)
                  {527, "Set-"},
                  {1295, "RightCentre"},
                  {2319, "Mode"},
-                 {2063, "SteeringWheel"},
-                 {2575, "ADAS Setting"}
+                 {2063, "SteeringWheel"}
              };
 
-             QString currentButton = buttonMap.value(f4, "");
+             QString currentButton = "";
+
+             // ✅ Check if f4 is in the ADAS Setting range (2560-2575)
+             if (f4 >= 2560 && f4 <= 2575) {
+                 currentButton = "ADAS Setting";
+             } else {
+                 // Check the map for exact matches
+                 currentButton = buttonMap.value(f4, "");
+             }
 
              // Button pressed
              if (f4 != 15 && currentButton != "" && currentButton != lastButtonName) {
                  emit newButtonEvent("SteeringWheel", currentButton + "Pressed");
-                 qDebug() << "[SWControl] Emitted:" << currentButton + "Pressed";
+                 qDebug() << "[SWControl] Emitted:" << currentButton + "Pressed" << "(f4=" << f4 << ")";
+
+                 // ✅ Send to Android when ADAS Setting is pressed
+                 if (currentButton == "ADAS Setting" && tcpServer) {
+                     tcpServer->send(17, true);
+                     qDebug() << "[SWControl] Sent to Android: index 17, checked=true";
+                 }
+
                  lastButtonName = currentButton;
              }
 
@@ -84,6 +100,13 @@ void SWControl::recievedDataSWControl(QByteArray ADASmessage)
              if (f4 == 15 && lastButtonName != "") {
                  emit newButtonEvent("SteeringWheel", lastButtonName + "Released");
                  qDebug() << "[SWControl] Emitted:" << lastButtonName + "Released";
+
+                 // ✅ Optional: Uncheck on Android when ADAS Setting is released
+                 if (lastButtonName == "ADAS Setting" && tcpServer) {
+                     tcpServer->send(17, false);
+                     qDebug() << "[SWControl] Sent to Android: index 17, checked=false";
+                 }
+
                  lastButtonName = "";
              }
 

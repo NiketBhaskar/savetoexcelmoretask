@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     eyeInput.initObjects(&logData,&manageFile);
     hrhInput.initObjects(&logData,&manageFile);
     adasControl.initObjects(&udpOutput, &draInput);
-    swcontrol.initObjects(&udpOutput, &draInput);
+    swcontrol.initObjects(&udpOutput, &draInput, &server);
     logData.initObjects(&manageFile,&eyeInput,&hrhInput,&draInput,&taskInput);
     udpOutput.initObjects(&logData,&eyeInput,&hrhInput,&draInput,&taskInput,&adasControl);
     //PASSING DATA BETWEEN OBJECTS - UPDATE LED CONTROL FROM QML
@@ -104,7 +104,10 @@ int main(int argc, char *argv[])
     QObject::connect(window, SIGNAL(startExpLoggingQML()),  &draInput, SLOT(startExpLogging()));
     QObject::connect(window, SIGNAL(stopExpLoggingQML()),   &eyeInput, SLOT(stopExpLogging()));
     QObject::connect(window, SIGNAL(stopExpLoggingQML()),   &draInput, SLOT(stopExpLogging()));
+    QObject::connect(&server, &Server::stateUpdated,
+                         &draInput, &drivingDataInput::onAndroidInteraction);
 
+    qDebug() << "✅ Android interaction tracking connected";
 
     //for leds //PKR
     QObject::connect(window, SIGNAL(changeLEDstate(QString)),&ledcontrol, SLOT(changePattern(QString)));

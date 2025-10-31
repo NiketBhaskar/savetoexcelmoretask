@@ -32,7 +32,8 @@ void TTSOTaskManager::loadHardcodedTasks()
 
     // Define 10 rep sequences (10 reps × 12 tasks = 120 tasks)
     QList<QStringList> repSequences;
-    repSequences.append({ "T11","T1","T5","T18","T14","T12","T9","T23","T21","T16","T22","T19" });  // Rep 1
+    repSequences.append({ "T11","T21","T5","T9","T14","T21","T23","T9","T21","T16","T22","T19" });  // Rep 1
+    //repSequences.append({ "T11","T1","T5","T18","T14","T12","T9","T23","T21","T16","T22","T19" });  // Rep 1
     repSequences.append({ "T1","T18","T11","T12","T5","T23","T14","T16","T9","T19","T21","T22" });  // Rep 2
     repSequences.append({ "T18","T12","T1","T23","T11","T16","T5","T19","T14","T22","T9","T21" });  // Rep 3
     repSequences.append({ "T12","T23","T18","T16","T1","T19","T11","T22","T5","T21","T14","T9" });  // Rep 4

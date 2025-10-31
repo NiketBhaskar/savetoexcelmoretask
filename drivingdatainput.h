@@ -94,7 +94,7 @@ class drivingDataInput: public QObject
         float SDLP(float LanePosition);                                         //Calculate SD of Lane Position
         float SDS(float Speed);                                                 //Calculate SD of Speed
         float DRABufferRefresh = 33.33333333;
-
+        int androidInteractionCount = 0;
     signals:
         void signalDraRefresh(QVariant status);                                 //Let QML know if data is streaming
         void signalDraLogging(QVariant status);                                 //Let QML know if data is logging
@@ -126,23 +126,16 @@ class drivingDataInput: public QObject
         void resetSDVals();
         QString setParamName(QString data);                                      //Function to setup driving sim parameter names
         void sendSTISIMTrigger();                                                //Send Signal to trigger STISIM
-        // ✅ New slot to receive active task info from TTSOTaskListModel
+        // slot to receive active task info from TTSOTaskListModel
         void onActiveTaskChanged(TTSOTask *task);
-//        void startDemoLogging();
-//            void stopDemoLogging();
-//            void startExpLogging();
-//            void stopExpLogging();
+        void onAndroidInteraction(int index, bool checked);
     private:
-        // ✅ Keep track of currently active task
+        // Keep track of currently active task
         TTSOTask *m_currentTask = nullptr;
         eyeDataInput *eyeData = nullptr;
         QWebSocketServer *m_server = nullptr;
         QList<QWebSocket*> m_clients;
         void sendTaskStarted();
-//        void startCustomLogging(const QString &label);
-//            void stopCustomLogging();
-//            bool m_customMode = false;
-//            QString m_customLabel; // "demo" or "exp"
     private slots:
         void onNewConnection();
         void onTextMessageReceived(QString message);

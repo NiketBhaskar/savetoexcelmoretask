@@ -23,7 +23,7 @@ drivingDataInput::drivingDataInput(QObject *parent) : QObject(parent)
                                         QWebSocketServer::NonSecureMode,
                                         this);
         if (m_server->listen(QHostAddress::Any, 22345)) {
-            qDebug() << "✅ WebSocket server listening on port 22345";
+            qDebug() << "TTSO -WebSocket server listening on port 22345";
             connect(m_server, &QWebSocketServer::newConnection,
                     this, &drivingDataInput::onNewConnection);
         } else {
@@ -64,12 +64,12 @@ static inline QString buildSimpleTaskName(TTSOTask *task) {
     int rep = task->repNumber();
     int pID = task->participantID();
 
-    // ✅ FIX: Baseline drive (absNum = 121, rep = 0) - WAS CHECKING absNum == 0
+    // TTSO -FIX: Baseline drive (absNum = 121, rep = 0) - WAS CHECKING absNum == 0
     if (absNum == -1 && rep == -1) {
         return QString("P%1_Baseline").arg(pID);
     }
 
-    // ✅ FIX: Experienced drive (absNum = 122, rep = 11) - WAS CHECKING absNum == -1
+    // TTSO -FIX: Experienced drive (absNum = 122, rep = 11) - WAS CHECKING absNum == -1
     if (absNum == -2 && rep == -2) {
         return QString("P%1_Experienced").arg(pID);
     }
@@ -108,6 +108,14 @@ void drivingDataInput::onNewConnection() {
     m_clients << client;
     qDebug() << "Client connected from" << client->peerAddress().toString();
 }
+void drivingDataInput::onAndroidInteraction(int index, bool checked)
+{
+    // Count every time index 16 becomes unchecked (touch on Android screen)
+    if (index == 16 && !checked) {
+        androidInteractionCount++;
+        qDebug() << "[Android] Interaction detected! Total count:" << androidInteractionCount;
+    }
+}
 void drivingDataInput::sendTaskStarted() {
     if (!m_currentTask) return;
     QJsonObject obj;
@@ -127,10 +135,10 @@ void drivingDataInput::sendTaskStarted() {
     for (QWebSocket *c : m_clients) {
         c->sendTextMessage(msg);
     }
-    qDebug() << "📤 Sent to Android:" << msg;
+    qDebug() << "[TTSO-DRA]Sent to Android:" << msg;
 }
 void drivingDataInput::onTextMessageReceived(QString message) {
-    qDebug() << "📩 Message from Android:" << message;
+    qDebug() << "[TTSO-DRA] Message from Android:" << message;
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8(), &err);
     if (err.error != QJsonParseError::NoError) return;
@@ -141,7 +149,7 @@ void drivingDataInput::onTextMessageReceived(QString message) {
     if (event == "taskEnded") {
         int absTaskNum = obj["absTaskNum"].toInt();
         int repNum = obj["repNum"].toInt();
-        qDebug() << "Android signaled task end:" << absTaskNum << repNum;
+        qDebug() << "[TTSO-DRA] Android signaled task end:" << absTaskNum << repNum;
         stopWriteDRABuffFile("Non TTSO");   // directly trigger stop here
     }
 }
@@ -191,108 +199,7 @@ void drivingDataInput::sendSTISIMTrigger()
 {
     DRA_udpsocket->sendCommand("Go!","192.168.101.21",1234);
 }
-//void drivingDataInput::startCustomLogging(const QString &label) {
-//    m_customMode = true;
-//    m_customLabel = label; // "demo" or "exp"
-//    // ✅ Ensure writes are allowed
-//      logData->loggingData = "true";
-//      DrivingOnOff = "true";
-//    taskStartTime = makeTime();
 
-//    QDir dir(fileData->fullfolderpath + "/DRATASKDATA");
-//    if (!dir.exists()) dir.mkpath(".");
-
-//    QString base = sanitize(label); // "demo" or "exp"
-//    DRAFilenameTask = dir.filePath(base + "_DRA.csv");
-
-//    if (m_obsController) m_obsController->startRecording(base);
-
-//    QFile f(DRAFilenameTask);
-//    if (f.open(QIODevice::Append | QIODevice::Text)) {
-//        QTextStream s(&f);
-//        s << "Unix TimeStamp,Participant ID,RunType,AbsTaskNum,TaskOrder,RepNumber,ElapsedBufferTime(s),"
-//             "TaskComplexity,Control Types,SimTime,LanePos,StrWhl,Crashes,Speed,Throttle,Brake,"
-//             "DistanceTravelled,DistToVehAhead"
-//          << Qt::endl;
-//    }
-
-//    DRA_frameNumberByTask = 0;
-//    DRA_time_buffer_ahead = 0;
-//    timerBuffer->start(DRABufferRefresh);
-//}
-
-//void drivingDataInput::stopCustomLogging() {
-//    timerBuffer->stop();
-//        taskEndTime = makeTime();
-
-//        // ---- NEW: compute stats from the just-recorded custom run ----
-//        double meanHeadway = -1, sdLanePos = -1, meanSpeed = -1;
-//        if (!DRAFilenameTask.isEmpty()) {
-//            computeStatsFromDRA(DRAFilenameTask, meanHeadway, sdLanePos, meanSpeed);
-//        }
-
-//        // Get attentional demand mean from eye tracker, if available (mirrors your task summary flow)
-//        double meanLiveAttenD = 0.0;
-//        if (eyeData) {
-//            meanLiveAttenD = eyeData->getMeanLiveAttenD();
-//            eyeData->resetMeanLiveAttenD();
-//        }
-
-//        // Prepare the summary row
-//        const double taskDurationSec = (taskEndTime - taskStartTime) / 1000.0; // ms -> s
-//        const QString baselineName = labelToBaselineName(m_customLabel);
-
-//        // Append into SUMMARY.csv (create header if needed)
-//        const QString summaryPath = fileData->fullfolderpath + "/" + fileData->filename + "_SUMMARY.csv";
-//        QFile summaryFile(summaryPath);
-//        if (summaryFile.open(QIODevice::Append | QIODevice::Text)) {
-//            QTextStream out(&summaryFile);
-//            if (summaryFile.size() == 0) {
-//                out << "UnixTimestamp,ParticipantID,AbsTaskNum,TaskOrder,TaskName,RepNumber,"
-//                       "TaskComplexity,ControlTypes,TaskDuration(Sec),TaskStartTime,TaskEndTime,NumberOfErrors,"
-//                       "MeanAttenD,MeanHeadway,SDOLanePos,MeanSpeed"
-//                    << Qt::endl;
-//            }
-
-//            // For baselines, we don’t have a TTSO task active: use zeros / tags as you prefer
-//            const QString participantId = "baseLine";          // or fileData->filename if you prefer the file code
-//            const QString taskComplexity = "baseline";
-//            const QString controlTypes   = "baseline";
-
-//            out << taskStartTime << ","
-//                << participantId << ","
-//                << "0" << ","               // AbsTaskNum
-//                << "0" << ","               // TaskOrder
-//                << baselineName << ","      // TaskName
-//                << "0" << ","               // RepNumber
-//                << taskComplexity << ","
-//                << controlTypes << ","
-//                << taskDurationSec  << ","
-//                << taskStartTime     << ","
-//                << taskEndTime       << ","
-//                << ""                << "," // NumberOfErrors (unknown/NA)
-//                << meanLiveAttenD    << ","
-//                << meanHeadway       << ","
-//                << sdLanePos         << ","
-//                << meanSpeed
-//                << Qt::endl;
-//        }
-
-
-//    // (optional) write summary row for custom runs if you want
-//    if (m_obsController) m_obsController->stopRecordingDelayed(2000);
-
-//    DRA_time_buffer_ahead = 0;
-//    DRA_frameNumberByTask = 0;
-//    logData->loggingData = "false";
-//       DrivingOnOff = "false";
-//       m_customMode = false;
-//       m_customLabel.clear();
-//}
-//void drivingDataInput::startDemoLogging() { startCustomLogging("demo"); }
-//void drivingDataInput::stopDemoLogging()  { stopCustomLogging(); }
-//void drivingDataInput::startExpLogging()  { startCustomLogging("exp"); }
-//void drivingDataInput::stopExpLogging()   { stopCustomLogging(); }
 
 void drivingDataInput::onActiveTaskChanged(TTSOTask *task)
 {
@@ -319,6 +226,9 @@ void drivingDataInput::startWriteDRABuffFile(QString fileNum)
 
      ULONGLONG posixTime = makeTime();
      taskStartTime = makeTime();   // Unix ms timestamp
+     // Reset Android interaction counter at task start
+     androidInteractionCount = 0;
+     qDebug() << "[DRA] Task started - Android interaction counter reset to 0";
      QDir dir(fileData->fullfolderpath + "/DRATASKDATA");
      if (!dir.exists()) {
          dir.mkpath(".");
@@ -350,12 +260,25 @@ void drivingDataInput::startWriteDRABuffFile(QString fileNum)
 
     timerBuffer->start(DRABufferRefresh);
 
-    qDebug() << "[DRA] Buffer logging started, file:" << DRAFilenameTask;
+    qDebug() << "[TTSO-DRA] Buffer logging started, file:" << DRAFilenameTask;
 }
 
 
 void drivingDataInput::stopWriteDRABuffFile(QString taskEndStatus)
 {
+    // TTSO -Guard against duplicate calls
+        if (taskStartTime == 0) {
+            qDebug() << "[TTSO-DRA] stopWriteDRABuffFile: No active task (taskStartTime == 0), skipping duplicate call";
+            return;
+        }
+
+        // TTSO -Additional safety: check if timer is already stopped
+        if (!timerBuffer->isActive()) {
+            qDebug() << "[TTSO-DRA] stopWriteDRABuffFile: Timer already stopped, skipping duplicate call";
+            taskStartTime = 0;  // Reset just in case
+            taskEndTime = 0;
+            return;
+        }
     timerBuffer->stop();
     taskEndTime = makeTime();
     double meanLiveAttenD = 0.0;
@@ -368,7 +291,10 @@ void drivingDataInput::stopWriteDRABuffFile(QString taskEndStatus)
     DRA_frameNumberByTask = 0;
     double meanHeadway = -1, sdLanePos = -1, meanSpeed = -1;
     computeStatsFromDRA(DRAFilenameTask, meanHeadway, sdLanePos, meanSpeed);
-    // ✅ Append into SUMMARY.csv
+    // TTSO -Log the interaction count before writing
+        qDebug() << "[DRA] Task ending - Android interactions during task:" << androidInteractionCount;
+
+    // TTSO -Append into SUMMARY.csv
         QString summaryPath = fileData->fullfolderpath + "/" + fileData->filename + "_SUMMARY.csv";
         QFile summaryFile(summaryPath);
         if (summaryFile.open(QIODevice::Append | QIODevice::Text)) {
@@ -376,7 +302,7 @@ void drivingDataInput::stopWriteDRABuffFile(QString taskEndStatus)
             if (summaryFile.size() == 0) {
                 out << "UnixTimestamp,ParticipantID,AbsTaskNum,TaskOrder,TaskName,RepNumber,"
                     << "TaskComplexity,ControlTypes,TaskDuration(Sec),TaskStartTime,TaskEndTime,NumberOfErrors,"
-                    << "MeanAttenD,MeanHeadway,SDOLanePos,MeanSpeed,EndStatus"
+                    << "MeanAttenD,MeanHeadway,SDOLanePos,MeanSpeed,AndroidInteractions,EndStatus"
                     << Qt::endl;
             }
             if (m_currentTask) {
@@ -396,18 +322,22 @@ void drivingDataInput::stopWriteDRABuffFile(QString taskEndStatus)
                     << meanHeadway << ","
                     << sdLanePos << ","
                     << meanSpeed << ","
+                    << androidInteractionCount << ","
                     << taskEndStatus
                     << Qt::endl;
+            }else {
+                qDebug() << "[DRA] Warning: No current task set when stopping, summary not written";
             }
         }
 
         taskStartTime = 0;
         taskEndTime   = 0;
+        androidInteractionCount = 0;
         if (m_obsController) {
 
                        m_obsController->stopRecordingDelayed(2000);
         }
-    qDebug() << "[DRA] Buffer logging stopped.";
+    qDebug() << "[TTSO-DRA] Buffer logging stopped successfully. EndStatus:" << taskEndStatus;
 }
 void drivingDataInput::computeStatsFromDRA(const QString &draFile,
                                            double &meanHeadway,

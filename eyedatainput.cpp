@@ -211,6 +211,19 @@ void eyeDataInput::startWriteAttBuffFile(QString fileNum)
 
 void eyeDataInput::stopWriteAttBuffFile()                                   //Function to calculate attention buffer parameters
 {
+    // ✅ Guard against duplicate calls
+        if (taskStartEpochTime == 0) {
+            qDebug() << "[TTSO-Eye] stopWriteAttBuffFile: No active task (taskStartEpochTime == 0), skipping duplicate call";
+            return;
+        }
+
+        // ✅ Additional safety: check if timer is already stopped
+        if (!timerBuffer->isActive()) {
+            qDebug() << "[TTSO-Eye] stopWriteAttBuffFile: Timer already stopped, skipping duplicate call";
+            taskStartEpochTime = 0;  // Reset just in case
+            frameNumberByTask = 0;
+            return;
+        }
     timerBuffer->stop();                                                    //Start timer
 
     // ✅ Write any remaining complete intervals
@@ -220,6 +233,7 @@ void eyeDataInput::stopWriteAttBuffFile()                                   //Fu
     glanceSampleBuffer.clear();
     taskStartEpochTime = 0;  // ✅ Reset
     frameNumberByTask = 0;
+    qDebug() << "[TTSO-Eye] Buffer logging stopped successfully.";
 }
 
 
